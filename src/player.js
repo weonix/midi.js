@@ -19,6 +19,9 @@ import root from './root'
   player.timeWarp = 1
   player.startDelay = 0
   player.BPM = 120
+  player.playingStartTime = 0;
+  player.ctxStartTime = 0;
+  player.lastCallbackTime = 0;
 
   player.start = player.resume = function (onsuccess) {
     if (player.currentTime < -1) {
@@ -79,15 +82,16 @@ import root from './root'
         }
       } else { // paused
         currentTime = player.currentTime
+        tOurTime = Date.now();
+        tTheirTime = player.currentTime;
       }
       // /
+      if (currentTime == 0 && player.playing) currentTime = ((Date.now() - player.ctxStartTime * 10) - player.playingStartTime) / 100 * MIDI.Player.BPM;
+
       var endTime = player.endTime
       // var percent = currentTime / endTime
-      var total = currentTime / 1000
-      var minutes = total / 60
-      var seconds = total - (minutes * 60)
-      var t1 = minutes * 60 + seconds
-      var t2 = (endTime / 1000)
+      var t1 = currentTime / 1000;
+      var t2 = endTime / 1000;
       // /
       if (t2 - t1 < -1.0) {
         return
@@ -97,6 +101,12 @@ import root from './root'
           end: t2,
           events: noteRegistrar
         })
+      }
+      player.lastCallbackTime = currentTime;
+
+      if (currentTime > endTime) {
+        stopAudio();
+        if (typeof player.onEnd != 'undefined') player.onEnd();
       }
     }
     // /
@@ -229,7 +239,7 @@ import root from './root'
     if (root.api === 'webaudio') {
       return root.WebAudio.getContext()
     } else {
-      player.ctx = {currentTime: 0}
+      player.ctx = { currentTime: 0 }
     }
     return player.ctx
   }
@@ -286,21 +296,31 @@ import root from './root'
       ctx.currentTime = (now - __now) / 1000
     }
     // /
-    startTime = ctx.currentTime
+    player.ctxStartTime = startTime = player.currentTime;
+    player.playingStartTime = Date.now() - player.ctxStartTime * 10;
     // /
     for (var n = 0; n < length && messages < 100; n++) {
-      var obj = data[n]
-      if ((queuedTime += obj[1]) <= currentTime) {
-        offset = queuedTime
-        continue
+      var obj = data[n];
+      //console.log("-----------------");
+      //console.log(currentTime, obj[0], obj[0].event);
+      //console.log(queuedTime, obj[1], offset);
+
+
+      if ((queuedTime += obj[1]) < currentTime) {
+        offset = queuedTime;
+        //console.log("in", currentTime > 0, obj[0].event.type !== 'channel');
+        if (currentTime > 0 || obj[0].event.type !== 'channel') continue;
       }
+      //console.log("!!");
       // /
-      currentTime = queuedTime - offset
+      currentTime = queuedTime - offset;
       // /
-      var event = obj[0].event
+      var event = obj[0].event;
       if (event.type !== 'channel') {
-        continue
+        continue;
       }
+
+      //console.log("###");
       // /
       var channelId = event.channel
       var channel = root.channels[channelId]

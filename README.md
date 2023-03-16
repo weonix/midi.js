@@ -1,5 +1,6 @@
 # midi.js
-A modern JavaScript port of MIDI.js.
+A modern JavaScript port of MIDI.js. Adopted changed from @silverhawk184:
+(https://github.com/mudcube/MIDI.js/pull/227)
 
 ## Basic Examples
 - [MIDI Player](http://sunebear.github.io/midi.js/MIDIPlayer.html)
