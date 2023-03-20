@@ -204,7 +204,7 @@ import root from './root'
   var startTime = 0 // to measure time elapse
   var noteRegistrar = {} // get event for requested note
   var onMidiEvent // listener
-  var scheduleTracking = function (channel, note, currentTime, offset, message, velocity, time) {
+  var scheduleTracking = function (channel, note, currentTime, offset, message, velocity, eventObj) {
     return setTimeout(function () {
       var data = {
         channel: channel,
@@ -212,7 +212,8 @@ import root from './root'
         now: currentTime,
         end: player.endTime,
         message: message,
-        velocity: velocity
+        velocity: velocity,
+        rawData: eventObj.rawData
       }
       //
       if (message === 128) {
@@ -343,7 +344,7 @@ import root from './root'
             event: event,
             time: queueTime,
             source: root.noteOn(channelId, event.noteNumber, event.velocity, delay),
-            interval: scheduleTracking(channelId, note, queuedTime + player.startDelay, offset - foffset, 144, event.velocity)
+            interval: scheduleTracking(channelId, note, queuedTime + player.startDelay, offset - foffset, 144, event.velocity, event)
           })
           messages++
           break
@@ -354,7 +355,7 @@ import root from './root'
             event: event,
             time: queueTime,
             source: root.noteOff(channelId, event.noteNumber, delay),
-            interval: scheduleTracking(channelId, note, queuedTime, offset - foffset, 128, 0)
+            interval: scheduleTracking(channelId, note, queuedTime, offset - foffset, 128, 0, event)
           })
           break
         default:
@@ -384,14 +385,16 @@ import root from './root'
     for (var key in noteRegistrar) {
       let o = noteRegistrar[key]
       if (noteRegistrar[key].message === 144 && onMidiEvent) {
+        const endPlaybackMidiData = [128 ,o.note, o.velocity]
         onMidiEvent({
           channel: o.channel,
           note: o.note,
           now: o.now,
           end: o.end,
           message: 128,
-          velocity: o.velocity
-        })
+          velocity: o.velocity,
+          rawData: endPlaybackMidiData
+        });
       }
     }
     // reset noteRegistrar

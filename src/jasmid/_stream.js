@@ -1,42 +1,59 @@
 /* Wrapper for accessing strings through sequential reads */
 export default function (str) {
   var position = 0
+  var lastReadBytes = []
 
-  function read (length) {
+  function getLastReadBytes() {
+    return lastReadBytes.slice();
+  }
+
+  function clearLastReadBytes() {
+    lastReadBytes.length = 0;
+  }
+
+  function moveReadPosition(length) {
+    for (var index = 0; index < length; index++) {
+      lastReadBytes.push(str.charCodeAt(position + index));
+    }
+    position += length;
+  }
+
+  function read(length) {
     var result = str.substr(position, length)
-    position += length
+    moveReadPosition(length);
     return result
   }
 
   /* read a big-endian 32-bit integer */
-  function readInt32 () {
+  function readInt32() {
     var result = (
-    (str.charCodeAt(position) << 24) +
-    (str.charCodeAt(position + 1) << 16) +
-    (str.charCodeAt(position + 2) << 8) +
-    str.charCodeAt(position + 3))
-    position += 4
+      (str.charCodeAt(position) << 24) +
+      (str.charCodeAt(position + 1) << 16) +
+      (str.charCodeAt(position + 2) << 8) +
+      str.charCodeAt(position + 3))
+
+    moveReadPosition(4)
     return result
   }
 
   /* read a big-endian 16-bit integer */
-  function readInt16 () {
+  function readInt16() {
     var result = (
-    (str.charCodeAt(position) << 8) +
-    str.charCodeAt(position + 1))
-    position += 2
+      (str.charCodeAt(position) << 8) +
+      str.charCodeAt(position + 1))
+    moveReadPosition(2)
     return result
   }
 
   /* read an 8-bit integer */
-  function readInt8 (signed) {
+  function readInt8(signed) {
     var result = str.charCodeAt(position)
     if (signed && result > 127) result -= 256
-    position += 1
+    moveReadPosition(1)
     return result
   }
 
-  function eof () {
+  function eof() {
     return position >= str.length
   }
 
@@ -44,7 +61,7 @@ export default function (str) {
     (big-endian value in groups of 7 bits,
     with top bit set to signify that another byte follows)
   */
-  function readVarInt () {
+  function readVarInt() {
     var result = 0
     while (true) {
       var b = readInt8()
@@ -64,6 +81,8 @@ export default function (str) {
     'readInt32': readInt32,
     'readInt16': readInt16,
     'readInt8': readInt8,
-    'readVarInt': readVarInt
+    'readVarInt': readVarInt,
+    'getLastReadBytes': getLastReadBytes,
+    'clearLastReadBytes': clearLastReadBytes,
   }
 }
