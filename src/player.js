@@ -86,7 +86,7 @@ import root from './root'
         tTheirTime = player.currentTime;
       }
       // /
-      if (currentTime == 0 && player.playing) currentTime = ((Date.now() - player.ctxStartTime * 10) - player.playingStartTime) / 100 * MIDI.Player.BPM;
+      //if (currentTime == 0 && player.playing) currentTime = ((Date.now() - player.ctxStartTime * 10) - player.playingStartTime) / 100 * MIDI.Player.BPM;
 
       var endTime = player.endTime
       // var percent = currentTime / endTime
@@ -308,9 +308,8 @@ import root from './root'
 
 
       if ((queuedTime += obj[1]) < currentTime) {
-        offset = queuedTime;
-        //console.log("in", currentTime > 0, obj[0].event.type !== 'channel');
-        if (currentTime > 0 || obj[0].event.type !== 'channel') continue;
+        offset = queuedTime
+        continue
       }
       //console.log("!!");
       // /
@@ -339,22 +338,24 @@ import root from './root'
           break
         case 'noteOn':
           if (channel.mute) break
-          note = event.noteNumber - (player.MIDIOffset || 0)
+          note = event.noteNumber + (player.MIDIOffset || 0)
+          //console.log(note, player.MIDIOffset, event.noteNumber);
           eventQueue.push({
             event: event,
             time: queueTime,
-            source: root.noteOn(channelId, event.noteNumber, event.velocity, delay),
+            source: root.noteOn(channelId, note, event.velocity, delay),
             interval: scheduleTracking(channelId, note, queuedTime + player.startDelay, offset - foffset, 144, event.velocity, event)
           })
           messages++
           break
         case 'noteOff':
           if (channel.mute) break
-          note = event.noteNumber - (player.MIDIOffset || 0)
+          note = event.noteNumber + (player.MIDIOffset || 0)
+          //console.log(note, player.MIDIOffset, event.noteNumber);
           eventQueue.push({
             event: event,
             time: queueTime,
-            source: root.noteOff(channelId, event.noteNumber, delay),
+            source: root.noteOff(channelId, note, delay),
             interval: scheduleTracking(channelId, note, queuedTime, offset - foffset, 128, 0, event)
           })
           break
