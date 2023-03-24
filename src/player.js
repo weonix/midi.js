@@ -19,6 +19,7 @@ import root from './root'
   player.timeWarp = 1
   player.startDelay = 0
   player.BPM = 120
+  player.OverrideProgramChanges = false
   player.playingStartTime = 0;
   player.ctxStartTime = 0;
   player.lastCallbackTime = 0;
@@ -227,6 +228,7 @@ import root from './root'
       player.currentTime = currentTime
       // /
       eventQueue.shift()
+      //console.log(eventQueue);
       // /
       if (eventQueue.length < 1000) {
         startAudio(queuedTime, true)
@@ -300,15 +302,17 @@ import root from './root'
     player.ctxStartTime = startTime = player.currentTime;
     player.playingStartTime = Date.now() - player.ctxStartTime * 10;
     // /
+    //console.log(data);
     for (var n = 0; n < length && messages < 100; n++) {
       var obj = data[n];
       //console.log("-----------------");
-      //console.log(currentTime, obj[0], obj[0].event);
+      // console.log(currentTime, queuedTime, obj[0], obj[0].event);
       //console.log(queuedTime, obj[1], offset);
 
 
       if ((queuedTime += obj[1]) < currentTime) {
         offset = queuedTime
+        //  console.log("skip1");
         continue
       }
       //console.log("!!");
@@ -320,18 +324,22 @@ import root from './root'
         continue;
       }
 
-      //console.log("###");
+     
       // /
       var channelId = event.channel
       var channel = root.channels[channelId]
       var delay = ctx.currentTime + ((currentTime + foffset + player.startDelay) / 1000)
+
       var queueTime = queuedTime - offset + player.startDelay
       switch (event.subtype) {
         case 'controller':
           root.setController(channelId, event.controllerType, event.value, delay)
           break
         case 'programChange':
-          root.programChange(channelId, event.programNumber, delay)
+          if(!player.OverrideProgramChanges){
+            console.log(event);
+             root.programChange(channelId, event.programNumber, delay)
+          }
           break
         case 'pitchBend':
           root.pitchBend(channelId, event.value, delay)
