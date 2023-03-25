@@ -87,7 +87,7 @@ import root from './root'
         tTheirTime = player.currentTime;
       }
       // /
-      //if (currentTime == 0 && player.playing) currentTime = ((Date.now() - player.ctxStartTime * 10) - player.playingStartTime) / 100 * MIDI.Player.BPM;
+      if (currentTime == 0 && player.playing) currentTime = ((Date.now() - player.ctxStartTime * 10) - player.playingStartTime) / 100 * MIDI.Player.BPM;
 
       var endTime = player.endTime
       // var percent = currentTime / endTime
@@ -310,10 +310,10 @@ import root from './root'
       //console.log(queuedTime, obj[1], offset);
 
 
-      if ((queuedTime += obj[1]) < currentTime) {
-        offset = queuedTime
-        //  console.log("skip1");
-        continue
+      if ((queuedTime += obj[1]) <= currentTime) {
+        offset = queuedTime;
+        //console.log("in", currentTime > 0, obj[0].event.type !== 'channel');
+        if (currentTime > 0 || obj[0].event.type !== 'channel') continue;
       }
       //console.log("!!");
       // /
