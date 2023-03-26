@@ -202,7 +202,7 @@ export function MidiFile(data) {
         */
       }
       event.rawData = stream.getLastReadBytes();
-      console.log(event)
+      //console.log(event)
       return event;
     }
   }

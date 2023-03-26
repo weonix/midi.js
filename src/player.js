@@ -28,7 +28,15 @@ import root from './root'
     if (player.currentTime < -1) {
       player.currentTime = -1
     }
+    let ctx = player.getContext();
+    player.ctxStartTime = ctx.currentTime;
+    player.playingStartTime = player.currentTime;
     startAudio(player.currentTime, null, onsuccess)
+  }
+
+  player.getAudioContextPlaytime = function () {
+    let ctx = player.getContext();
+    return ctx.currentTime - player.ctxStartTime + this.playingStartTime / 1000;
   }
 
   player.pause = function () {
@@ -87,7 +95,7 @@ import root from './root'
         tTheirTime = player.currentTime;
       }
       // /
-      if (currentTime == 0 && player.playing) currentTime = ((Date.now() - player.ctxStartTime * 10) - player.playingStartTime) / 100 * MIDI.Player.BPM;
+      // if (currentTime == 0 && player.playing) currentTime = ((Date.now() - player.ctxStartTime * 10) - player.playingStartTime) / 100 * MIDI.Player.BPM;
 
       var endTime = player.endTime
       // var percent = currentTime / endTime
@@ -238,7 +246,7 @@ import root from './root'
     }, currentTime - offset)
   }
 
-  var getContext = function () {
+  player.getContext = function () {
     if (root.api === 'webaudio') {
       return root.WebAudio.getContext()
     } else {
@@ -285,8 +293,10 @@ import root from './root'
     var offset = 0
     var messages = 0
     var data = player.data
-    var ctx = getContext()
+    var ctx = player.getContext()
     var length = data.length
+
+    //console.log("========", currentTime, "===========", length, messages, eventQueue);
     //
     queuedTime = 0.5
     // /
@@ -299,23 +309,27 @@ import root from './root'
       ctx.currentTime = (now - __now) / 1000
     }
     // /
-    player.ctxStartTime = startTime = player.currentTime;
-    player.playingStartTime = Date.now() - player.ctxStartTime * 10;
+   
+    startTime = currentTime;
+    // player.playingStartTime = Date.now() - startTime * 10;
     // /
     //console.log(data);
     for (var n = 0; n < length && messages < 100; n++) {
       var obj = data[n];
-      //console.log("-----------------");
+      //console.log("-", obj);
       // console.log(currentTime, queuedTime, obj[0], obj[0].event);
       //console.log(queuedTime, obj[1], offset);
 
-
-      if ((queuedTime += obj[1]) <= currentTime) {
+      queuedTime += obj[1]
+      if ((queuedTime) <= currentTime) {
         offset = queuedTime;
-        //console.log("in", currentTime > 0, obj[0].event.type !== 'channel');
-        if (currentTime > 0 || obj[0].event.type !== 'channel') continue;
+        //console.log("in", currentTime, queuedTime, obj[1], obj[0].event);
+        if (currentTime > 0.5 || obj[0].event.type !== 'channel') {
+             //console.log("in", currentTime, queuedTime, obj[1], obj[0].event);
+            continue;
+        }
       }
-      //console.log("!!");
+      //console.log("!!", currentTime, queuedTime, offset);
       // /
       currentTime = queuedTime - offset;
       // /
@@ -328,7 +342,10 @@ import root from './root'
       // /
       var channelId = event.channel
       var channel = root.channels[channelId]
-      var delay = ctx.currentTime + ((currentTime + foffset + player.startDelay) / 1000)
+      var delay2 = ctx.currentTime + ((currentTime + foffset + player.startDelay) / 1000)
+      var delay = player.ctxStartTime + ((currentTime + startTime - player.playingStartTime + player.startDelay) / 1000)
+      //console.log(ctx.currentTime, player.ctxStartTime, currentTime, foffset);
+      //console.log("event", obj, delay, delay2);
 
       var queueTime = queuedTime - offset + player.startDelay
       switch (event.subtype) {
@@ -337,7 +354,7 @@ import root from './root'
           break
         case 'programChange':
           if(!player.OverrideProgramChanges){
-            console.log(event);
+            //console.log(event);
              root.programChange(channelId, event.programNumber, delay)
           }
           break
@@ -347,7 +364,7 @@ import root from './root'
         case 'noteOn':
           if (channel.mute) break
           note = event.noteNumber + (player.MIDIOffset || 0)
-          //console.log(note, player.MIDIOffset, event.noteNumber);
+          //console.log(channelId, note, event.velocity, delay);
           eventQueue.push({
             event: event,
             time: queueTime,
@@ -376,7 +393,7 @@ import root from './root'
   }
 
   var stopAudio = function () {
-    var ctx = getContext()
+    var ctx = player.getContext()
     player.playing = false
     player.restart += (ctx.currentTime - startTime) * 1000
     // stop the audio, and intervals
