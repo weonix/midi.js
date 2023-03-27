@@ -69,11 +69,15 @@ window.AudioContext && (function () {
   midi.noteOn = function (event, channelId, noteId, velocity, delay) {
     delay = delay || 0
 
+  
+
     // / check whether the note exists
     var channel = root.channels[channelId]
     var instrument = channel.instrument
     var bufferId = instrument + '' + noteId
     var buffer = audioBuffers[bufferId]
+
+    console.log("noteOn", bufferId, delay);
     if (!buffer) {
       return
     }
@@ -121,6 +125,7 @@ window.AudioContext && (function () {
         buffer.play()
       }
     } else {
+      console.log(delay, ctx.currentTime);
       source.start(delay || 0)
     }
     // /
@@ -199,8 +204,13 @@ window.AudioContext && (function () {
       //   delay += ctx.currentTime
       // }
       var source = sources[sid]
-      source.gain.linearRampToValueAtTime(1, delay)
-      source.gain.linearRampToValueAtTime(0, delay + 0.3)
+      try {
+          source.gain.linearRampToValueAtTime(1, delay)
+          source.gain.linearRampToValueAtTime(0, delay + 0.3)
+      } catch(a){
+
+      }
+      
       if (source.noteOff) { // old api
         source.noteOff(delay + 0.3)
       } else { // new api
@@ -223,9 +233,11 @@ window.AudioContext && (function () {
     }
   }
 
-  midi.connect = function (opts) {
+  midi.connect = async function (opts) {
     root.setDefaultPlugin(midi)
-    midi.setContext(ctx || createAudioContext(), opts.onsuccess)
+    await new Promise((resolve, reject)=>{
+       midi.setContext(ctx || createAudioContext(), resolve);
+    })
   }
 
   midi.getContext = function () {

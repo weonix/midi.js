@@ -23,7 +23,7 @@ import root from './root'
   player.playingStartTime = 0;
   player.ctxStartTime = 0;
   player.lastCallbackTime = 0;
-  player.minLookAheadTime = 1.0;
+  player.minLookAheadTime = 0.5;
 
   player.start = player.resume = function (onsuccess) {
     if (player.currentTime < -1) {
@@ -128,55 +128,59 @@ import root from './root'
 
   // helpers
 
-  player.loadMidiFile = function (onsuccess, onprogress, onerror) {
+  player.loadMidiFile = async function () { //onsuccess, onprogress, onerror
     try {
       // console.log(MidiFile(player.currentData), new Replayer(MidiFile(player.currentData), player.timeWarp, null, player.BPM))
       player.replayer = new Replayer(MidiFile(player.currentData), player.timeWarp, null, player.BPM)
       player.data = player.replayer.getData()
       player.endTime = getLength()
       // /
-      root.loadPlugin({
-        // instruments: player.getFileInstruments(),
-        onsuccess: onsuccess,
-        onprogress: onprogress,
-        onerror: onerror
-      })
+      // root.loadPlugin({
+      //   // instruments: player.getFileInstruments(),
+      //   onsuccess: onsuccess,
+      //   onprogress: onprogress,
+      //   onerror: onerror
+      // })
     } catch (event) {
       console.error(event)
       onerror && onerror(event)
     }
   }
 
-  player.loadFile = function (file, onsuccess, onprogress, onerror) {
+  player.loadFile = async function (file) { // onsuccess, onprogress, onerror)
     player.stop()
     if (file.indexOf('base64,') !== -1) {
       var data = window.atob(file.split(',')[1])
       player.currentData = data
-      player.loadMidiFile(onsuccess, onprogress, onerror)
+      await player.loadMidiFile()
     } else {
-      var fetch = new window.XMLHttpRequest()
-      fetch.open('GET', file)
-      fetch.overrideMimeType('text/plain; charset=x-user-defined')
-      fetch.onreadystatechange = function () {
-        if (this.readyState === 4) {
-          if (this.status === 200) {
-            var t = this.responseText || ''
-            var ff = []
-            var mx = t.length
-            var scc = String.fromCharCode
-            for (var z = 0; z < mx; z++) {
-              ff[z] = scc(t.charCodeAt(z) & 255)
+      await new Promise((resolve, reject)=>{
+        var fetch = new window.XMLHttpRequest()
+        fetch.open('GET', file)
+        fetch.overrideMimeType('text/plain; charset=x-user-defined')
+        fetch.onreadystatechange = async function () {
+          if (this.readyState === 4) {
+            if (this.status === 200) {
+              var t = this.responseText || ''
+              var ff = []
+              var mx = t.length
+              var scc = String.fromCharCode
+              for (var z = 0; z < mx; z++) {
+                ff[z] = scc(t.charCodeAt(z) & 255)
+              }
+              // /
+              var data = ff.join('')
+              player.currentData = data
+              await player.loadMidiFile()
+              resolve();
+            } else {
+              reject();
             }
-            // /
-            var data = ff.join('')
-            player.currentData = data
-            player.loadMidiFile(onsuccess, onprogress, onerror)
-          } else {
-            onerror && onerror('Unable to load MIDI file')
           }
         }
-      }
-      fetch.send()
+        fetch.send()
+      });
+      
     }
   }
 
@@ -278,7 +282,7 @@ import root from './root'
     player.eventPosition = 0;
 
     loopHandler = setInterval(function () {
-      console.log("=============", queuedTime, player.endTime);
+      //console.log("=============", queuedTime, player.endTime);
       if (queuedTime < player.endTime) { // grab next sequence
         //console.log(currentTime, player.replayer);
 
@@ -290,13 +294,13 @@ import root from './root'
         var ctx = player.getContext()
         var length = data.length
 
-        console.log("========", currentTime, queuedTime, "===========");
+        //console.log("========", currentTime, queuedTime, "===========");
         //
         //
         for (var n = player.eventPosition; n < length; n++) {
           var obj = data[n];
           //console.log("-", obj);
-          console.log("-", obj, (currentTime / 1000) - player.minLookAheadTime, player.getAudioContextPlaytime());
+          //console.log("-", obj, (currentTime / 1000) - player.minLookAheadTime, player.getAudioContextPlaytime());
 
           //stop queueing if look ahead is exceeded
           if ((queuedTime / 1000) - player.minLookAheadTime > ( player.getAudioContextPlaytime())){
@@ -307,7 +311,7 @@ import root from './root'
           currentTime += obj[1]
           player.eventPosition += 1;
 
-          console.log(currentTime, queuedTime);
+          //console.log(currentTime, queuedTime);
           if (currentTime < queuedTime + obj[1]) {
             continue;
           }
@@ -323,10 +327,10 @@ import root from './root'
 
           var channelId = event.channel
           var channel = root.channels[channelId]
-          var delay = player.ctxStartTime + ((currentTime - player.playingStartTime + player.startDelay) / 1000)
+          var delay = player.ctxStartTime + ((currentTime - player.playingStartTime + player.startDelay) / 1000);
 
           //console.log(ctx.currentTime, player.ctxStartTime, currentTime, foffset);
-          console.log("event", obj, delay, ctx.currentTime);
+          console.log("event scheduled", obj, delay, ctx.currentTime);
 
           switch (event.subtype) {
             case 'controller':
@@ -360,12 +364,12 @@ import root from './root'
   }
 
   player.getContext = function () {
-    if (root.api === 'webaudio') {
+    if (root.API.WebAudio.avaliable) {
       return root.WebAudio.getContext()
     } else {
-      player.ctx = { get currentTime(){return window.performance.now() / 1000}}
+      return { get currentTime(){return window.performance.now() / 1000}}
     }
-    return player.ctx
+    //return player.ctx
   }
 
   var getLength = function () {
@@ -520,8 +524,10 @@ import root from './root'
 
   var stopAudio = function () {
     var ctx = player.getContext()
+    var ctxTime = ctx == null ? 0 : ctx.currentTime;
     player.playing = false
-    player.restart += (ctx.currentTime - startTime) * 1000
+    player.restart += (ctxTime - startTime) * 1000
+
     // stop the audio, and intervals
     while (eventQueue.length) {
       let o = eventQueue.pop()
@@ -533,6 +539,7 @@ import root from './root'
         o.source.disconnect(0)
       }
     }
+
     // run callback to cancel any notes still playing
     for (var key in noteRegistrar) {
       let o = noteRegistrar[key]
@@ -549,6 +556,7 @@ import root from './root'
         });
       }
     }
+
 
     if(root.stopAllNotes){
       root.stopAllNotes(player.minLookAheadTime);

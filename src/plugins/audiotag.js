@@ -134,14 +134,12 @@ window.Audio && (function () {
     }
   }
 
-  midi.connect = function (opts) {
+  midi.connect = async function (opts) {
     root.setDefaultPlugin(midi)
     // /
     for (var key in root.keyToNote) {
       noteToKey[root.keyToNote[key]] = key
       notes[key] = {id: key}
     }
-    // /
-    opts.onsuccess && opts.onsuccess()
   }
 })()

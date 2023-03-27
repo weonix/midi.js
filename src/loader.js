@@ -33,7 +33,7 @@ root.soundfontUrl = './soundfont/'
   })
 */
 
-root.loadPlugin = function (opts) {
+root.loadPlugin = async function (opts) {
   if (typeof opts === 'function') {
     opts = {onsuccess: opts}
   }
@@ -41,39 +41,66 @@ root.loadPlugin = function (opts) {
   root.soundfontUrl = opts.soundfontUrl || root.soundfontUrl
 
   // / Detect the best type of audio to use
-  audioDetect(function (supports) {
+  audioDetect( async function (supports) {
     var hash = window.location.hash
     var api = ''
+    var success = false;
+
+    //console.log(supports);
 
     // / use the most appropriate plugin if not specified
-    if (supports[opts.api]) {
-      api = opts.api
-    } else if (supports[hash.substr(1)]) {
-      api = hash.substr(1)
-    } else if (supports.webmidi) {
-      api = 'webmidi'
-    } else if (window.AudioContext) { // Chrome
-      api = 'webaudio'
-    } else if (window.Audio) { // Firefox
-      api = 'audiotag'
-    }
+    // if (supports[opts.api]) {
+    //   api = opts.api
+    // } 
+    // if (supports[hash.substr(1)]) {
+    //   api = hash.substr(1)
+    // } 
+    // if (supports.webmidi) {
+    //   api = 'webmidi'
+    // } 
+    // if (window.AudioContext) { // Chrome
+    //   api = 'webaudio'
+    // } 
+    // if (window.Audio) { // Firefox
+    //   api = 'audiotag'
+    // }
 
     console.log(api);
 
-    if (connect[api]) {
+   // if (connect[api]) {
       // / use audio/ogg when supported
-      let audioFormat
-      if (opts.targetFormat) {
-        audioFormat = opts.targetFormat
-      } else { // use best quality
-        audioFormat = supports['audio/ogg'] ? 'ogg' : 'mp3'
-      }
+    let audioFormat
+    if (opts.targetFormat) {
+      audioFormat = opts.targetFormat
+    } else { // use best quality
+      audioFormat = supports['audio/ogg'] ? 'ogg' : 'mp3'
+    }
 
-      // / load the specified plugin
-      root.__api = api
-      root.__audioFormat = audioFormat
-      root.supports = supports
-      root.loadResource(opts)
+    // / load the specified plugin
+    root.__api = api
+    root.__audioFormat = audioFormat
+    root.supports = supports
+    root.loadResource(opts)
+   // }
+
+    //connect[root.__api](opts)
+    var list = [];
+
+    if (supports.webmidi) {
+      api = 'webmidi'
+      list.push(connect['webmidi'](opts));
+    } 
+    if (window.AudioContext) { // Chrome
+      api = 'webaudio'
+      list.push(connect['webaudio'](opts));
+    } 
+    // if (window.Audio) { // Firefox
+    //   api = 'audiotag'
+    //   list.push(connect['audiotag'](opts));
+    // }
+
+    for (const item of list) {
+      await item;
     }
   })
 }
@@ -109,7 +136,7 @@ root.loadResource = function (opts) {
   opts.format = root.__audioFormat
   opts.instruments = instruments
   // /
-  connect[root.__api](opts)
+
 }
 
 var connect = {
@@ -190,7 +217,7 @@ var sendRequest = function (instrumentId, audioFormat, onprogress, onsuccess, on
 }
 
 root.setDefaultPlugin = function (midi) {
-  for (var key in midi) {
-    root[key] = midi[key]
-  }
+  // for (var key in midi) {
+  //   root[key] = midi[key]
+  // }
 }
