@@ -23,6 +23,7 @@ import root from './root'
   player.playingStartTime = 0;
   player.ctxStartTime = 0;
   player.lastCallbackTime = 0;
+  player.minLookAheadTime = 1.0;
 
   player.start = player.resume = function (onsuccess) {
     if (player.currentTime < -1) {
@@ -31,7 +32,10 @@ import root from './root'
     let ctx = player.getContext();
     player.ctxStartTime = ctx.currentTime;
     player.playingStartTime = player.currentTime;
-    startAudio(player.currentTime, null, onsuccess)
+    player.eventPosition = 0;
+    //startAudio(player.currentTime, null, onsuccess)
+
+    player.scheduleLoop();
   }
 
   player.getAudioContextPlaytime = function () {
@@ -213,7 +217,8 @@ import root from './root'
   var startTime = 0 // to measure time elapse
   var noteRegistrar = {} // get event for requested note
   var onMidiEvent // listener
-  var scheduleTracking = function (channel, note, currentTime, offset, message, velocity, eventObj) {
+  var scheduleTracking = function (channel, note, currentTime, wait, message, velocity, eventObj) {
+    var wait = wait;
     return setTimeout(function () {
       var data = {
         channel: channel,
@@ -236,21 +241,129 @@ import root from './root'
       player.currentTime = currentTime
       // /
       eventQueue.shift()
-      //console.log(eventQueue);
+      console.log(eventQueue, wait, player.getAudioContextPlaytime(), (queuedTime / 1000) - 1);
       // /
-      if (eventQueue.length < 1000) {
+      // var allowedTimeStep = 2;
+      // for (const iterator of eventQueue) {
+        
+      // }
+      if (eventQueue.length < 10) {
         startAudio(queuedTime, true)
-      } else if (player.currentTime === queuedTime && queuedTime < player.endTime) { // grab next sequence
+      } else if (player.getAudioContextPlaytime() >= (queuedTime / 1000) - player.minLookAheadTime && queuedTime < player.endTime) { // grab next sequence
         startAudio(queuedTime, true)
       }
-    }, currentTime - offset)
+    }, wait)
+  }
+
+  var loopHandler;
+  player.scheduleLoop = function() {
+    var currentTime;
+    if (!player.replayer) {
+      return
+    }
+      
+    //if (!fromCache) {
+    if (typeof currentTime === 'undefined') {
+      currentTime = player.restart
+    }
+    // /
+    player.playing && stopAudio()
+    player.playing = true
+    player.data = player.replayer.getData()
+    player.endTime = getLength()
+    //}
+
+    queuedTime = player.currentTime;
+
+    player.eventPosition = 0;
+
+    loopHandler = setInterval(function () {
+      console.log("=============", queuedTime, player.endTime);
+      if (queuedTime < player.endTime) { // grab next sequence
+        //console.log(currentTime, player.replayer);
+
+        // /
+        var note
+        var offset = 0
+        var messages = 0
+        var data = player.data
+        var ctx = player.getContext()
+        var length = data.length
+
+        console.log("========", currentTime, queuedTime, "===========");
+        //
+        //
+        for (var n = player.eventPosition; n < length; n++) {
+          var obj = data[n];
+          //console.log("-", obj);
+          console.log("-", obj, (currentTime / 1000) - player.minLookAheadTime, player.getAudioContextPlaytime());
+
+          //stop queueing if look ahead is exceeded
+          if ((queuedTime / 1000) - player.minLookAheadTime > ( player.getAudioContextPlaytime())){
+              break;
+          }
+
+          //move currentEvent time and event position, include events before playback begin time
+          currentTime += obj[1]
+          player.eventPosition += 1;
+
+          console.log(currentTime, queuedTime);
+          if (currentTime < queuedTime + obj[1]) {
+            continue;
+          }
+
+          //move queue time if we start starting to process new incoming events
+          queuedTime += obj[1]
+          
+          //handle or queue the event
+          var event = obj[0].event;
+          if (event.type !== 'channel') {
+            continue;
+          }
+
+          var channelId = event.channel
+          var channel = root.channels[channelId]
+          var delay = player.ctxStartTime + ((currentTime - player.playingStartTime + player.startDelay) / 1000)
+
+          //console.log(ctx.currentTime, player.ctxStartTime, currentTime, foffset);
+          console.log("event", obj, delay, ctx.currentTime);
+
+          switch (event.subtype) {
+            case 'controller':
+              root.setController(event, channelId, event.controllerType, event.value, delay)
+              break
+            case 'programChange':
+              if(!player.OverrideProgramChanges){
+                root.programChange(event, channelId, event.programNumber, delay)
+              }
+              break
+            case 'pitchBend':
+              root.pitchBend(event, channelId, event.value, delay)
+              break
+            case 'noteOn':
+              if (channel.mute) break
+              note = event.noteNumber + (player.MIDIOffset || 0)
+              root.noteOn(event, channelId, note, event.velocity, delay);
+              messages++
+              break
+            case 'noteOff':
+              if (channel.mute) break
+              note = event.noteNumber + (player.MIDIOffset || 0)
+              root.noteOff(event, channelId, note, delay);
+              break
+            default:
+              break
+          }
+        }
+      }
+    }, 10)
   }
 
   player.getContext = function () {
     if (root.api === 'webaudio') {
       return root.WebAudio.getContext()
     } else {
-      player.ctx = { currentTime: 0 }
+      player.ctx = { get currentTime(){return window.performance.now() / 1000}}
     }
     return player.ctx
   }
@@ -303,31 +416,40 @@ import root from './root'
     // var interval = eventQueue[0] && eventQueue[0].interval || 0
     var foffset = currentTime - player.currentTime
     // /
-    if (root.api !== 'webaudio') { // set currentTime on ctx
-      var now = getNow()
-      __now = __now || now
-      ctx.currentTime = (now - __now) / 1000
-    }
+    // if (root.api !== 'webaudio') { // set currentTime on ctx
+    //   var now = getNow()
+    //   __now = __now || now
+    //   ctx.currentTime = (now - __now) / 1000
+    // }
     // /
    
     startTime = currentTime;
     // player.playingStartTime = Date.now() - startTime * 10;
     // /
     //console.log(data);
-    for (var n = 0; n < length && messages < 100; n++) {
+    var allowedTimeStep = 3; //player.eventPosition
+    for (var n = 0; n < length && allowedTimeStep > 0; n++) {
       var obj = data[n];
       //console.log("-", obj);
       // console.log(currentTime, queuedTime, obj[0], obj[0].event);
       //console.log(queuedTime, obj[1], offset);
-
+      // if (player.getAudioContextPlaytime() >= (queuedTime / 1000) - player.minLookAheadTime){
+      //   break;
+      // }
+      //player.eventPosition += 1;
+      
       queuedTime += obj[1]
       if ((queuedTime) <= currentTime) {
         offset = queuedTime;
         //console.log("in", currentTime, queuedTime, obj[1], obj[0].event);
-        if (currentTime > 0.5 || obj[0].event.type !== 'channel') {
+        if (currentTime > 0.5) {
              //console.log("in", currentTime, queuedTime, obj[1], obj[0].event);
             continue;
         }
+      }
+
+      if(obj[1] > 0){
+        allowedTimeStep -= 1;
       }
       //console.log("!!", currentTime, queuedTime, offset);
       // /
@@ -342,24 +464,28 @@ import root from './root'
       // /
       var channelId = event.channel
       var channel = root.channels[channelId]
-      var delay2 = ctx.currentTime + ((currentTime + foffset + player.startDelay) / 1000)
+      //var delay2 = ctx.currentTime + ((currentTime + foffset + player.startDelay) / 1000)
       var delay = player.ctxStartTime + ((currentTime + startTime - player.playingStartTime + player.startDelay) / 1000)
+
+      var scheduleWait = delay - ctx.currentTime / 1000;
       //console.log(ctx.currentTime, player.ctxStartTime, currentTime, foffset);
-      //console.log("event", obj, delay, delay2);
+      console.log("event", obj, delay, ctx.currentTime, allowedTimeStep);
+
+      
 
       var queueTime = queuedTime - offset + player.startDelay
       switch (event.subtype) {
         case 'controller':
-          root.setController(channelId, event.controllerType, event.value, delay)
+          root.setController(event, channelId, event.controllerType, event.value, delay)
           break
         case 'programChange':
           if(!player.OverrideProgramChanges){
             //console.log(event);
-             root.programChange(channelId, event.programNumber, delay)
+             root.programChange(event, channelId, event.programNumber, delay)
           }
           break
         case 'pitchBend':
-          root.pitchBend(channelId, event.value, delay)
+          root.pitchBend(event, channelId, event.value, delay)
           break
         case 'noteOn':
           if (channel.mute) break
@@ -368,8 +494,8 @@ import root from './root'
           eventQueue.push({
             event: event,
             time: queueTime,
-            source: root.noteOn(channelId, note, event.velocity, delay),
-            interval: scheduleTracking(channelId, note, queuedTime + player.startDelay, offset - foffset, 144, event.velocity, event)
+            source: root.noteOn(event, channelId, note, event.velocity, delay),
+            interval: scheduleTracking(event, channelId, note, queuedTime + player.startDelay, scheduleWait, 144, event.velocity, event)
           })
           messages++
           break
@@ -380,8 +506,8 @@ import root from './root'
           eventQueue.push({
             event: event,
             time: queueTime,
-            source: root.noteOff(channelId, note, delay),
-            interval: scheduleTracking(channelId, note, queuedTime, offset - foffset, 128, 0, event)
+            source: root.noteOff(event, channelId, note, delay),
+            interval: scheduleTracking(event, channelId, note, queuedTime, scheduleWait, 128, 0, event)
           })
           break
         default:
@@ -423,6 +549,12 @@ import root from './root'
         });
       }
     }
+
+    if(root.stopAllNotes){
+      root.stopAllNotes(player.minLookAheadTime);
+    }
+
+    clearInterval(loopHandler);
     // reset noteRegistrar
     noteRegistrar = {}
   }
