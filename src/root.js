@@ -1,6 +1,6 @@
 class MidiPlayer{
     API = {
-        WebMidi:{
+        WebMIDI:{
             root:this,
             enabled: true,
             get avaliable(){return this.root.WebAudio != null},
@@ -52,7 +52,7 @@ class MidiPlayer{
     noteOn = (event,channel, note, velocity, delay)  => {
         for (const apiName in this.API) {
             var api = this.API[apiName];
-            console.log(api, api.enabled, api.avaliable)
+            //console.log(api, api.enabled, api.avaliable)
             if(api.enabled && api.avaliable){
                 api.api.noteOn(event,channel, note, velocity, delay)
             }
@@ -70,7 +70,7 @@ class MidiPlayer{
     stopAllNotes = (lookAhead)  => {
         for (const apiName in this.API) {
             var api = this.API[apiName];
-            console.log(api, api.enabled, api.avaliable)
+            //console.log(api, api.enabled, api.avaliable)
             if(api.enabled && api.avaliable){
                 api.api.stopAllNotes(lookAhead)
             }

@@ -9,14 +9,16 @@ import root from '../root'
 
 (function () {
   var plugin = null;
-  var pluginOutputs = null;
   var output = null;
   var midi = root.WebMIDI = {api: 'webmidi'}
+  var stateChanageEventCallback = null;
+  midi.outputs = [];
 
   midi.send = function (data, delay) { // set channel volume
     if(!output){
       return
     }
+    delay += midi.ctxStartTime
     output.send(data, delay * 1000)
   }
 
@@ -24,6 +26,7 @@ import root from '../root'
     if(!output){
       return
     }
+    delay += midi.ctxStartTime
     output.send(event.rawData, delay * 1000)
     //output.send([channel, type, value], delay * 1000)
   }
@@ -32,6 +35,7 @@ import root from '../root'
   if(!output){
       return
     }
+    delay += midi.ctxStartTime
     output.send([0xB0 + channel, 0x07, volume], delay * 1000)
   }
 
@@ -39,7 +43,8 @@ import root from '../root'
   if(!output){
       return
     }
-  output.send(event.rawData, delay * 1000)
+    delay += midi.ctxStartTime
+    output.send(event.rawData, delay * 1000)
     //output.send([0xC0 + channel, program], delay * 1000)
   }
 
@@ -47,6 +52,7 @@ import root from '../root'
   if(!output){
       return
     }
+    delay += midi.ctxStartTime
     console.log(event, event.rawData)
     output.send(event.rawData,delay * 1000)
     //console.log([0xE0 + channel, program],delay * 1000);
@@ -57,6 +63,7 @@ import root from '../root'
     if(!output){
       return
     }
+    delay += midi.ctxStartTime
     output.send(event.rawData, delay * 1000)
     //output.send([0x90 + channel, note, velocity], delay * 1000)
   }
@@ -65,6 +72,7 @@ import root from '../root'
     if(!output){
       return
     }
+    delay += midi.ctxStartTime
     output.send(event.rawData, delay * 1000)
     //output.send([0x80 + channel, note, 0], delay * 1000)
   }
@@ -119,12 +127,26 @@ import root from '../root'
     // /
     
     var access = await navigator.requestMIDIAccess()
+    plugin = access;
     console.log(access)
-    plugin = access
-    pluginOutputs = plugin.outputs
-    if (typeof pluginOutputs === 'function') { // Chrome pre-43
-      pluginOutputs = pluginOutputs()
-    } 
+    updateOutputList();
+    stateChanageEventCallback && stateChanageEventCallback(null)
+    access.onstatechange = (event) => {
+      console.log(event);
+      updateOutputList();
+      stateChanageEventCallback && stateChanageEventCallback(event);
+    }
+
+    function updateOutputList() {
+      midi.outputs.clear();
+      var outputs = access.outputs;
+      if (typeof outputs === 'function') { // Chrome pre-43
+        outputs = outputs();
+      }
+      for (const out of outputs) {
+        midi.outputs.push(out[1]);
+      }
+    }
     // console.log(output)
     // if (output == undefined) { // nothing there...
     //   errFunction()
@@ -134,5 +156,23 @@ import root from '../root'
       // opts.onsuccess && opts.onsuccess()
     // }
 
+  }
+
+  midi.setStateChangeEventListener = function (callback) {
+    stateChanageEventCallback = callback;
+  }
+
+  midi.setOutput= function (id) {
+    for (const out of midi.outputs) {
+      if(out.id == id){
+        output = out;
+        return;
+      }
+    }
+    output = null;
+  }
+
+  midi.recordCtxStartTime = () => {
+    midi.ctxStartTime = window.performance.now() / 1000
   }
 })()

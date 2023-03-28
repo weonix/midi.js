@@ -77,7 +77,7 @@ window.AudioContext && (function () {
     var bufferId = instrument + '' + noteId
     var buffer = audioBuffers[bufferId]
 
-    console.log("noteOn", bufferId, delay);
+   
     if (!buffer) {
       return
     }
@@ -86,6 +86,8 @@ window.AudioContext && (function () {
     // if (delay < ctx.currentTime) {
     //   delay += ctx.currentTime
     // }
+
+    delay += midi.ctxStartTime
 
     // / create audio buffer
     var source
@@ -96,6 +98,7 @@ window.AudioContext && (function () {
       source.buffer = buffer
     }
 
+    //console.log("noteOn", source);
     // / add effects to buffer
     if (effects) {
       var chain = source
@@ -125,7 +128,7 @@ window.AudioContext && (function () {
         buffer.play()
       }
     } else {
-      console.log(delay, ctx.currentTime);
+      //console.log(delay, ctx.currentTime);
       source.start(delay || 0)
     }
     // /
@@ -136,19 +139,22 @@ window.AudioContext && (function () {
 
   midi.noteOff = function (event, channelId, noteId, delay) {
     delay = delay || 0
-
+    
     // / check whether the note exists
     var channel = root.channels[channelId]
     var instrument = channel.instrument
     var bufferId = instrument + '' + noteId
     var buffer = audioBuffers[bufferId]
     if (buffer) {
+
+      delay += midi.ctxStartTime
       // if (delay < ctx.currentTime) {
       //   delay += ctx.currentTime
       // }
       // /
       var source = sources[channelId + '' + noteId]
       if (source) {
+        //console.log("noteOff", source);
         if (source.gainNode) {
           // @Miranet: 'the values of 0.2 and 0.3 could of course be used as
           // a 'release' parameter for ADSR like time settings.'
@@ -174,7 +180,7 @@ window.AudioContext && (function () {
           }
         }
         // /
-        delete sources[channelId + '' + noteId]
+        //delete sources[channelId + '' + noteId]
         // /
         return source
       }
@@ -182,6 +188,7 @@ window.AudioContext && (function () {
   }
 
   midi.chordOn = function (channel, chord, velocity, delay) {
+    
     var res = {}
     for (var n = 0, note, len = chord.length; n < len; n++) {
       res[note = chord[n]] = midi.noteOn(channel, note, velocity, delay)
@@ -198,23 +205,26 @@ window.AudioContext && (function () {
   }
 
   midi.stopAllNotes = function (lookAhead) {
+    //console.log("stopAllNotes", sources);
     for (var sid in sources) {
       var delay = 0
       // if (delay < ctx.currentTime) {
       //   delay += ctx.currentTime
       // }
+      
       var source = sources[sid]
-      try {
-          source.gain.linearRampToValueAtTime(1, delay)
-          source.gain.linearRampToValueAtTime(0, delay + 0.3)
-      } catch(a){
+      console.log(source, source.gainNode.gain);
+      //try {
+      source.gainNode.gain.linearRampToValueAtTime(1, delay)
+      source.gainNode.gain.linearRampToValueAtTime(0, delay+0.3)
+      //} catch(a){
 
-      }
+      //}
       
       if (source.noteOff) { // old api
-        source.noteOff(delay + 0.3)
+        source.noteOff(delay+0.3)
       } else { // new api
-        source.stop(delay + 0.3)
+        source.stop(delay+0.3)
       }
       delete sources[sid]
     }
@@ -339,6 +349,11 @@ window.AudioContext && (function () {
       }
       request.send()
     }
+  }
+
+  midi.recordCtxStartTime = ()=>{
+    let ctx = midi.getContext();
+    midi.ctxStartTime = ctx.currentTime;
   }
 
   function createAudioContext () {
