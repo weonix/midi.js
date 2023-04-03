@@ -373,6 +373,8 @@ import root from './root'
 
     player.eventPosition = 0;
 
+    let lastLoopTime = player.currentTime;
+
     loopHandler = setInterval(function () {
 
       if (queuedTime < player.endTime) { // grab next sequence
@@ -382,6 +384,9 @@ import root from './root'
         var messages = 0
         var data = player.data
         var length = data.length
+
+        var dt =  player.currentTime - lastLoopTime;
+        lastLoopTime = player.currentTime;
         player.currentTime = player.getAudioContextPlaytime() * 1000;
 
 
@@ -490,7 +495,13 @@ import root from './root'
       //     }
       //   }
       // }
-    }, 10)
+
+      for (const api in root.API) {
+        if(root.API[api].avaliable && root.API[api].api.onLoopCallBack){
+          root.API[api].api.onLoopCallBack(dt);
+        }
+      }
+    }, 5)
   }
 
   // var startAudio = function (currentTime, fromCache, onsuccess) {

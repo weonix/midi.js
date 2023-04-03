@@ -53,7 +53,7 @@ import root from '../root'
       return
     }
     delay += midi.ctxStartTime
-    console.log(event, event.rawData)
+    //console.log(event, event.rawData)
     output.send(event.rawData,delay * 1000)
     //console.log([0xE0 + channel, program],delay * 1000);
     //output.send([0xE0 + channel, program], delay * 1000)
@@ -73,7 +73,7 @@ import root from '../root'
       return
     }
     delay += midi.ctxStartTime
-    output.send(event.rawData, delay * 1000)
+    //output.send(event.rawData, delay * 1000)
     //output.send([0x80 + channel, note, 0], delay * 1000)
   }
 

@@ -147,7 +147,7 @@ window.AudioContext && (function () {
     var buffer = audioBuffers[bufferId]
     if (buffer) {
 
-      delay += midi.ctxStartTime
+      delay += midi.ctxStartTime 
       // if (delay < ctx.currentTime) {
       //   delay += ctx.currentTime
       // }
@@ -213,7 +213,7 @@ window.AudioContext && (function () {
       // }
       
       var source = sources[sid]
-      console.log(source, source.gainNode.gain);
+      //console.log(source, source.gainNode.gain);
       //try {
       source.gainNode.gain.linearRampToValueAtTime(1, delay)
       source.gainNode.gain.linearRampToValueAtTime(0, delay+0.3)

@@ -65,7 +65,7 @@ root.loadPlugin = async function (opts) {
     //   api = 'audiotag'
     // }
 
-    console.log(api);
+    console.log("detect");
 
    // if (connect[api]) {
       // / use audio/ogg when supported

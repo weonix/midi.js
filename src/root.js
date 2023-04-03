@@ -52,7 +52,7 @@ class MidiPlayer{
     noteOn = (event,channel, note, velocity, delay)  => {
         for (const apiName in this.API) {
             var api = this.API[apiName];
-            //console.log(api, api.enabled, api.avaliable)
+            // console.log(api, api.enabled, api.avaliable)
             if(api.enabled && api.avaliable){
                 api.api.noteOn(event,channel, note, velocity, delay)
             }
