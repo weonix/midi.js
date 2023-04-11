@@ -394,7 +394,7 @@ import root from './root'
 
         for (var n = player.eventPosition; n < length; n++) {
           var obj = data[n];
-          //console.log("-", obj);
+          
           //console.log("-", obj, (currentTime / 1000) - player.minLookAheadTime, player.getAudioContextPlaytime());
           startTime = currentTime;
           //stop queueing if look ahead is exceeded
@@ -424,6 +424,8 @@ import root from './root'
           var channelId = event.channel
           var channel = root.channels[channelId]
           var delay = ((currentTime - player.playingStartTime + player.startDelay) / 1000);
+
+          //console.log("-", obj[0].event.channel, obj[1], event.subtype, delay);
           
 
           //console.log(ctx.currentTime, player.ctxStartTime, currentTime, foffset);
@@ -458,11 +460,11 @@ import root from './root'
               messages++
               break
             case 'noteOff':
-              if (channel.mute) break
+              //if (channel.mute) break
               note = event.noteNumber + (player.MIDIOffset || 0)
               root.noteOff(event, channelId, note, delay);
               var key = channelId + " " + note + " " + delay;
-              noteOffRegistrar[note] = {
+              noteOffRegistrar[key] = {
                 channel: channelId,
                 note: note,
                 now: currentTime,
@@ -479,22 +481,22 @@ import root from './root'
       }
 
 
-      // for (const note in noteOffRegistrar) {
-      //   // if(!noteRegistrar[note]){
-      //   //     console.log(noteOffRegistrar[note])
-      //   //     console.log(noteRegistrar)
-      //   // }
-      //   if(noteOffRegistrar[note].now <= player.getAudioContextPlaytime() * 1000){
-      //     for (const noteOn in noteRegistrar) {
-      //       if(noteRegistrar[noteOn].note == noteOffRegistrar[note].note){
-      //         console.log("time off", noteRegistrar[noteOn])
-      //         delete noteRegistrar[noteOn];
-      //         delete noteOffRegistrar[note];
-      //         break;
-      //       }
-      //     }
-      //   }
-      // }
+      for (const note in noteOffRegistrar) {
+        // if(!noteRegistrar[note]){
+        //     console.log(noteOffRegistrar[note])
+        //     console.log(noteRegistrar)
+        // }
+        if(noteOffRegistrar[note].now <= player.getAudioContextPlaytime() * 1000){
+          for (const noteOn in noteRegistrar) {
+            if(noteRegistrar[noteOn].note == noteOffRegistrar[note].note){
+              console.log("time off", noteRegistrar[noteOn])
+              delete noteRegistrar[noteOn];
+              delete noteOffRegistrar[note];
+              break;
+            }
+          }
+        }
+      }
 
       for (const api in root.API) {
         if(root.API[api].avaliable && root.API[api].api.onLoopCallBack){
@@ -502,6 +504,18 @@ import root from './root'
         }
       }
     }, 5)
+  }
+
+  root.setChannelMute = function (channelId, isMuted, delay) {
+    var channel = root.channels[channelId]
+    if (delay) {
+      return setTimeout(function () {
+        channel.mute = isMuted
+      }, delay)
+    } else {
+      channel.mute = isMuted
+    }
+    
   }
 
   // var startAudio = function (currentTime, fromCache, onsuccess) {
