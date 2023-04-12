@@ -64,7 +64,7 @@ export function Replayer (midiFile, timeWarp, eventProcessor, bpm, timeSigniture
   
   function addMetronomeEvents(currentTick, ticksToProcess, temporal){
     var i = 0;
-   
+    var endingTick = currentTick + ticksToProcess;
     var totalWait = 0;
     for(var sign of timeSignitures){
       i++;
@@ -73,45 +73,58 @@ export function Replayer (midiFile, timeWarp, eventProcessor, bpm, timeSigniture
         break;
       }
       var beatTime = ticksPerBeat * 4 / sign.denominator;
-      var startingTick = currentTick;
-      while(currentTick < nextSignTime){
-        var wait = (currentTick - sign.time) % beatTime + (currentTick - sign.time) % beatTime;
-       
-        if(wait == 0 && startingTick != currentTick){
-          wait = beatTime;
-        }
-       
-        var metronomeEventsType = 'light';
-        // if((((wait + currentTick) - (sign.time * ticksPerBeat)) / ticksPerBeat) % sign.numerator == 0){
-        //   metronomeEventsType = 'heavy';
-        // }
-        //console.log(wait, currentTick, sign.time, beatTime, nextSignTime);
-        
-        var beatsToGenerate =  wait / ticksPerBeat
-        var secondsToGenerate = beatsToGenerate / (beatsPerMinute / 60)
-        var time = (secondsToGenerate * 1000 * timeWarp) || 0
 
-        temporal.push(
-          [
-            {
-              'ticksToEvent': wait,
-              'event': {},
-              'track': 16,
-              'type': 'metronomeEvent',
-              'metronomeEventsType': metronomeEventsType
-            },
-            time
-          ]
-        );
-        currentTick += wait;
-        if(wait == 0 && startingTick == currentTick){
-          currentTick += beatTime
-        }
-        totalWait += wait;
+
+      let wait;
+      if((currentTick - sign.time) % beatTime != 0){
+        wait = (currentTick - sign.time) % beatTime
       }
+      else{
+        wait = 0;
+      }
+      
+      if(currentTick + wait < endingTick){
+        
+        addSingleMetronomeEvent(currentTick, wait, sign)
+        totalWait += wait;
+        currentTick += wait;
+
+        //current tick is now aligned with beat
+        while(currentTick + beatTime < nextSignTime && currentTick + beatTime < endingTick){
+          let wait = beatTime;
+          addSingleMetronomeEvent(currentTick, wait, sign)
+          totalWait += wait;
+          currentTick += wait;
+        }
+      }
+
     }
 
     return totalWait;
+
+    function addSingleMetronomeEvent(currentTick, wait, sign) {
+      var beatsToGenerate = wait / ticksPerBeat
+      var secondsToGenerate = beatsToGenerate / (beatsPerMinute / 60)
+      var time = (secondsToGenerate * 1000 * timeWarp) || 0
+
+      var metronomeEventsType = 'light'
+      if ((((wait + currentTick) - (sign.time * ticksPerBeat)) / ticksPerBeat) % sign.numerator == 0) {
+        metronomeEventsType = 'heavy'
+      }
+
+      temporal.push(
+        [
+          {
+            'ticksToEvent': wait,
+            'event': {},
+            'track': 16,
+            'type': 'metronomeEvent',
+            'metronomeEventsType': metronomeEventsType
+          },
+          time
+        ]
+      )
+    }
   }
   //
   var totalTick = 0;
