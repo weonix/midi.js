@@ -138,6 +138,15 @@ root.channels = (function () { // 0 - 15 channels
       solo: false
     }
   }
+  channels['metronome'] = { // metronome
+    instrument: 114,
+    pitchBend: 0,
+    mute: false,
+    mono: false,
+    omni: false,
+    solo: false
+  }
+  
   return channels
 })()
 

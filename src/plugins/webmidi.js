@@ -15,7 +15,7 @@ import root from '../root'
   midi.outputs = [];
 
   midi.send = function (data, delay) { // set channel volume
-    if(!output){
+    if(!output || !event.rawData){
       return
     }
     delay += midi.ctxStartTime
@@ -23,7 +23,7 @@ import root from '../root'
   }
 
   midi.setController = function (event, channel, type, value, delay) {
-    if(!output){
+    if(!output || !event.rawData){
       return
     }
     delay += midi.ctxStartTime
@@ -32,7 +32,7 @@ import root from '../root'
   }
 
   midi.setVolume = function (channel, volume, delay) { // set channel volume
-  if(!output){
+  if(!output || !event.rawData){
       return
     }
     delay += midi.ctxStartTime
@@ -40,7 +40,7 @@ import root from '../root'
   }
 
   midi.programChange = function (event, channel, program, delay) { // change patch (instrument)
-  if(!output){
+  if(!output || !event.rawData){
       return
     }
     delay += midi.ctxStartTime
@@ -49,7 +49,7 @@ import root from '../root'
   }
 
   midi.pitchBend = function (event, channel, program, delay) { // pitch bend
-  if(!output){
+  if(!output || !event.rawData){
       return
     }
     delay += midi.ctxStartTime
@@ -60,7 +60,7 @@ import root from '../root'
   }
 
   midi.noteOn = function (event,channel, note, velocity, delay) {
-    if(!output){
+    if(!output || !event.rawData){
       return
     }
     delay += midi.ctxStartTime
@@ -69,7 +69,7 @@ import root from '../root'
   }
 
   midi.noteOff = function (event, channel, note, delay) {
-    if(!output){
+    if(!output || !event.rawData){
       return
     }
     delay += midi.ctxStartTime
@@ -78,7 +78,7 @@ import root from '../root'
   }
 
   midi.chordOn = function (channel, chord, velocity, delay) {
-    if(!output){
+    if(!output || !event.rawData){
       return
     }
     for (var n = 0; n < chord.length; n++) {
@@ -88,7 +88,7 @@ import root from '../root'
   }
 
   midi.chordOff = function (channel, chord, delay) {
-    if(!output){
+    if(!output || !event.rawData){
       return
     }
     for (var n = 0; n < chord.length; n++) {
@@ -98,7 +98,7 @@ import root from '../root'
   }
 
   midi.stopAllNotes = function (lookAhead) {
-    if(!output){
+    if(!output || !event.rawData){
       return
     }
     if(output.clear){

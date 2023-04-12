@@ -6,11 +6,12 @@ const clone = function (o) {
   return ret
 }
 
-export function Replayer (midiFile, timeWarp, eventProcessor, bpm) {
+export function Replayer (midiFile, timeWarp, eventProcessor, bpm, timeSignitures) {
   var trackStates = []
   var beatsPerMinute = bpm || 120
   var bpmOverride = !!bpm
   var ticksPerBeat = midiFile.header.ticksPerBeat
+  var timeSignitures = timeSignitures || [{time:0, numerator:4, denominator: 4}];
 
   for (let i = 0; i < midiFile.tracks.length; i++) {
     trackStates[i] = {
@@ -52,13 +53,68 @@ export function Replayer (midiFile, timeWarp, eventProcessor, bpm) {
       return {
         'ticksToEvent': ticksToNextEvent,
         'event': nextEvent,
-        'track': nextEventTrack
+        'track': nextEventTrack,
+        'type': 'midiEvent',
       }
     } else {
       return null
     }
   }
+
+  
+  function addMetronomeEvents(currentTick, ticksToProcess, temporal){
+    var i = 0;
+   
+    var totalWait = 0;
+    for(var sign of timeSignitures){
+      i++;
+      var nextSignTime = timeSignitures.length < i ? timeSignitures[i].time * ticksPerBeat: currentTick + ticksToProcess
+      if(sign.time >= currentTick + ticksToProcess){
+        break;
+      }
+      var beatTime = ticksPerBeat * 4 / sign.denominator;
+      var startingTick = currentTick;
+      while(currentTick < nextSignTime){
+        var wait = (currentTick - sign.time) % beatTime + (currentTick - sign.time) % beatTime;
+       
+        if(wait == 0 && startingTick != currentTick){
+          wait = beatTime;
+        }
+       
+        var metronomeEventsType = 'light';
+        // if((((wait + currentTick) - (sign.time * ticksPerBeat)) / ticksPerBeat) % sign.numerator == 0){
+        //   metronomeEventsType = 'heavy';
+        // }
+        //console.log(wait, currentTick, sign.time, beatTime, nextSignTime);
+        
+        var beatsToGenerate =  wait / ticksPerBeat
+        var secondsToGenerate = beatsToGenerate / (beatsPerMinute / 60)
+        var time = (secondsToGenerate * 1000 * timeWarp) || 0
+
+        temporal.push(
+          [
+            {
+              'ticksToEvent': wait,
+              'event': {},
+              'track': 16,
+              'type': 'metronomeEvent',
+              'metronomeEventsType': metronomeEventsType
+            },
+            time
+          ]
+        );
+        currentTick += wait;
+        if(wait == 0 && startingTick == currentTick){
+          currentTick += beatTime
+        }
+        totalWait += wait;
+      }
+    }
+
+    return totalWait;
+  }
   //
+  var totalTick = 0;
   var midiEvent
   var temporal = []
   ~(function processEvents () {
@@ -70,12 +126,22 @@ export function Replayer (midiFile, timeWarp, eventProcessor, bpm) {
       // /
       var beatsToGenerate = 0
       var secondsToGenerate = 0
+      var  ticksInMetronomeEvents = 0
       if (midiEvent.ticksToEvent > 0) {
-        beatsToGenerate = midiEvent.ticksToEvent / ticksPerBeat
+        var ticksInMetronomeEvents = addMetronomeEvents(totalTick, midiEvent.ticksToEvent, temporal);
+        totalTick += midiEvent.ticksToEvent;
+
+        console.log(midiEvent.ticksToEvent, ticksInMetronomeEvents)
+        midiEvent.ticksToEvent = midiEvent.ticksToEvent - ticksInMetronomeEvents;
+
+        console.log(midiEvent.ticksToEvent)
+
+        beatsToGenerate = (midiEvent.ticksToEvent) / ticksPerBeat
         secondsToGenerate = beatsToGenerate / (beatsPerMinute / 60)
       }
       // /
       var time = (secondsToGenerate * 1000 * timeWarp) || 0
+
       temporal.push([midiEvent, time])
       midiEvent = getNextEvent()
     }
@@ -84,7 +150,10 @@ export function Replayer (midiFile, timeWarp, eventProcessor, bpm) {
     if (midiEvent) {
       while (midiEvent) processNext(true)
     }
+
+    console.log(temporal);
   })()
+
 
   return {
     getData: function () {

@@ -59,6 +59,7 @@ class MidiPlayer{
         }
     }
     noteOff = (event, channel, note, delay)  => {
+        return;
         for (const apiName in this.API) {
             var api = this.API[apiName];
             if(api.enabled && api.avaliable){

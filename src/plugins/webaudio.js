@@ -76,7 +76,7 @@ window.AudioContext && (function () {
     var instrument = channel.instrument
     var bufferId = instrument + '' + noteId
     var buffer = audioBuffers[bufferId]
-
+    console.log(channel, channelId);
    
     if (!buffer) {
       return

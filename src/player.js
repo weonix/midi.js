@@ -8,6 +8,7 @@
 
 import { MidiFile, Replayer } from './jasmid'
 import root from './root'
+import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
 
 (function () {
   root.Player = {}
@@ -24,6 +25,8 @@ import root from './root'
   player.ctxStartTime = 0;
   player.lastCallbackTime = 0;
   player.minLookAheadTime = 0.5;
+  player.useMetronome = false;
+
 
   var queuedTime //
   var startTime = 0 // to measure time elapse
@@ -375,8 +378,9 @@ import root from './root'
 
     let lastLoopTime = player.currentTime;
 
-    loopHandler = setInterval(function () {
+    console.log(player.data);
 
+    loopHandler = setInterval(function () {
       if (queuedTime < player.endTime) { // grab next sequence
         // /
         var note
@@ -389,7 +393,7 @@ import root from './root'
         lastLoopTime = player.currentTime;
         player.currentTime = player.getAudioContextPlaytime() * 1000;
 
-
+        
         //console.log("========", currentTime, queuedTime, "===========");
 
         for (var n = player.eventPosition; n < length; n++) {
@@ -407,13 +411,28 @@ import root from './root'
           
           player.eventPosition += 1;
 
-          //console.log(currentTime, queuedTime);
+          //console.log(n, currentTime, queuedTime);
+
           if (currentTime < queuedTime + obj[1]) {
             continue;
           }
 
           //move queue time if we start starting to process new incoming events
           queuedTime += obj[1]
+
+          if(obj[0].type == 'metronomeEvent'){
+            if(player.useMetronome){
+              var delay = ((currentTime - player.playingStartTime + player.startDelay) / 1000);
+              if(obj[0].metronomeEventsType == "light"){
+                root.noteOn({}, 'metronome', 100, 60, delay);
+              }
+              else{
+                root.noteOn({}, 'metronome', 88, 110, delay);
+              }
+            }
+            messages++
+            continue;
+          }
           
           //handle or queue the event
           var event = obj[0].event;
@@ -429,7 +448,7 @@ import root from './root'
           
 
           //console.log(ctx.currentTime, player.ctxStartTime, currentTime, foffset);
-          //console.log("event scheduled", obj, delay, ctx.currentTime);
+         //console.log("event scheduled", obj, delay);
 
           switch (event.subtype) {
             case 'controller':
@@ -489,7 +508,7 @@ import root from './root'
         if(noteOffRegistrar[note].now <= player.getAudioContextPlaytime() * 1000){
           for (const noteOn in noteRegistrar) {
             if(noteRegistrar[noteOn].note == noteOffRegistrar[note].note){
-              console.log("time off", noteRegistrar[noteOn])
+              //console.log("time off", noteRegistrar[noteOn])
               delete noteRegistrar[noteOn];
               delete noteOffRegistrar[note];
               break;
@@ -516,6 +535,10 @@ import root from './root'
       channel.mute = isMuted
     }
     
+  }
+
+  root.setUseMetronome = function (value) {
+    player.useMetronome = value;
   }
 
   // var startAudio = function (currentTime, fromCache, onsuccess) {

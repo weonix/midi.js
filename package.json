@@ -40,5 +40,8 @@
     "standard": "^8.0.0",
     "standard-loader": "^5.0.0",
     "webpack": "1.13.2"
+  },
+  "dependencies": {
+    "precise-interval": "^1.0.2"
   }
 }
