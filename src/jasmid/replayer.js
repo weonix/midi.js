@@ -144,10 +144,10 @@ export function Replayer (midiFile, timeWarp, eventProcessor, bpm, timeSigniture
         var ticksInMetronomeEvents = addMetronomeEvents(totalTick, midiEvent.ticksToEvent, temporal);
         totalTick += midiEvent.ticksToEvent;
 
-        console.log(midiEvent.ticksToEvent, ticksInMetronomeEvents)
+        //console.log(midiEvent.ticksToEvent, ticksInMetronomeEvents)
         midiEvent.ticksToEvent = midiEvent.ticksToEvent - ticksInMetronomeEvents;
 
-        console.log(midiEvent.ticksToEvent)
+        //console.log(midiEvent.ticksToEvent)
 
         beatsToGenerate = (midiEvent.ticksToEvent) / ticksPerBeat
         secondsToGenerate = beatsToGenerate / (beatsPerMinute / 60)

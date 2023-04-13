@@ -73,12 +73,12 @@ import root from '../root'
       return
     }
     delay += midi.ctxStartTime
-    //output.send(event.rawData, delay * 1000)
+    output.send(event.rawData, delay * 1000)
     //output.send([0x80 + channel, note, 0], delay * 1000)
   }
 
   midi.chordOn = function (channel, chord, velocity, delay) {
-    if(!output || !event.rawData){
+    if(!output){
       return
     }
     for (var n = 0; n < chord.length; n++) {
@@ -88,7 +88,7 @@ import root from '../root'
   }
 
   midi.chordOff = function (channel, chord, delay) {
-    if(!output || !event.rawData){
+    if(!output ){
       return
     }
     for (var n = 0; n < chord.length; n++) {
@@ -98,7 +98,7 @@ import root from '../root'
   }
 
   midi.stopAllNotes = function (lookAhead) {
-    if(!output || !event.rawData){
+    if(!output){
       return
     }
     if(output.clear){

@@ -505,15 +505,16 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
         //     console.log(noteOffRegistrar[note])
         //     console.log(noteRegistrar)
         // }
-        if(noteOffRegistrar[note].now <= player.getAudioContextPlaytime() * 1000){
+        const noteOff = noteOffRegistrar[note];
+        if(noteOff.now <= player.getAudioContextPlaytime() * 1000){
           for (const noteOn in noteRegistrar) {
-            if(noteRegistrar[noteOn].note == noteOffRegistrar[note].note){
+            const noteOnData = noteRegistrar[noteOn];
+            if(noteOnData.note == noteOff.note && noteOnData.now < noteOff.now){
               //console.log("time off", noteRegistrar[noteOn])
               delete noteRegistrar[noteOn];
-              delete noteOffRegistrar[note];
-              break;
             }
           }
+          delete noteOffRegistrar[note];
         }
       }
 
@@ -539,6 +540,30 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
 
   root.setUseMetronome = function (value) {
     player.useMetronome = value;
+  }
+
+  root.getActiveNotes = function () {
+    const currentTime = player.getAudioContextPlaytime() * 1000
+    var notes = []
+  
+    for(var noteOn in noteRegistrar){
+      const noteOnData = noteRegistrar[noteOn];
+      if(noteOnData.now <= currentTime){
+        let alreadyOff = false;
+        for(var noteOff in noteOffRegistrar){
+          const noteOffData = noteOffRegistrar[noteOff];
+          if(noteOffData.now < currentTime){
+            alreadyOff = true
+            break;
+          }
+        }
+        if(!alreadyOff){
+          notes[noteOnData.note] = noteOnData
+        }
+      }
+    }
+    //console.log(notes, currentTime)
+    return notes;
   }
 
   // var startAudio = function (currentTime, fromCache, onsuccess) {
