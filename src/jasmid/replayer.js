@@ -66,7 +66,7 @@ export function Replayer (midiFile, timeWarp, eventProcessor, bpm, timeSigniture
     var i = 0;
     var endingTick = currentTick + ticksToProcess;
     var totalWait = 0;
-    console.log("ticksToProcess", ticksToProcess, endingTick)
+    //console.log("ticksToProcess", ticksToProcess, endingTick)
     for(var sign of timeSignitures){
       i++;
       var nextSignTime = timeSignitures.length < i ? timeSignitures[i].time * ticksPerBeat: currentTick + ticksToProcess
@@ -76,7 +76,7 @@ export function Replayer (midiFile, timeWarp, eventProcessor, bpm, timeSigniture
       var beatTime = ticksPerBeat * 4 / sign.denominator;
 
 
-      console.log(currentTick, beatTime)
+      //console.log(currentTick, beatTime)
 
       let wait;
       if((currentTick - sign.time) % beatTime != 0){
@@ -115,7 +115,7 @@ export function Replayer (midiFile, timeWarp, eventProcessor, bpm, timeSigniture
         metronomeEventsType = 'heavy'
       }
 
-       console.log(currentTick, "addSingleMetronomeEvent", wait, metronomeEventsType)
+       //console.log(currentTick, "addSingleMetronomeEvent", wait, metronomeEventsType)
 
       temporal.push(
         [
@@ -169,7 +169,7 @@ export function Replayer (midiFile, timeWarp, eventProcessor, bpm, timeSigniture
       while (midiEvent) processNext(true)
     }
 
-    console.log(temporal);
+    //console.log(temporal);
   })()
 
 

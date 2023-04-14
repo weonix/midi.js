@@ -558,7 +558,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
           }
         }
         if(!alreadyOff){
-          notes[noteOnData.note] = noteOnData
+          notes.push(noteOnData)
         }
       }
     }
