@@ -67,12 +67,12 @@ class MidiPlayer{
         }
     }
 
-    stopAllNotes = (lookAhead)  => {
+    stopAllNotes = (delay, lookAhead)  => {
         for (const apiName in this.API) {
             var api = this.API[apiName];
             //console.log(api, api.enabled, api.avaliable)
             if(api.enabled && api.avaliable){
-                api.api.stopAllNotes(lookAhead)
+                api.api.stopAllNotes(delay, lookAhead)
             }
         }
     }

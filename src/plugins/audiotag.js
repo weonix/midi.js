@@ -128,7 +128,7 @@ window.Audio && (function () {
     }
   }
 
-  midi.stopAllNotes = function (lookAhead) {
+  midi.stopAllNotes = function (delay, lookAhead) {
     for (var nid = 0, length = audioBuffers.length; nid < length; nid++) {
       audioBuffers[nid].pause()
     }

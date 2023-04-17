@@ -203,10 +203,11 @@ window.AudioContext && (function () {
     return res
   }
 
-  midi.stopAllNotes = function (lookAhead) {
-    //console.log("stopAllNotes", sources);
+  midi.stopAllNotes = function (delay, lookAhead) {
+    console.log("stopAllNotes", delay);
+    delay += midi.ctxStartTime;
     for (var sid in sources) {
-      var delay = 0
+      //var delay = 0
       // if (delay < ctx.currentTime) {
       //   delay += ctx.currentTime
       // }
@@ -214,7 +215,7 @@ window.AudioContext && (function () {
       var source = sources[sid]
       //console.log(source, source.gainNode.gain);
       //try {
-      source.gainNode.gain.linearRampToValueAtTime(1, delay)
+      //source.gainNode.gain.linearRampToValueAtTime(source.gainNode.gain.value, delay)
       source.gainNode.gain.linearRampToValueAtTime(0, delay+0.3)
       //} catch(a){
 
@@ -350,9 +351,9 @@ window.AudioContext && (function () {
     }
   }
 
-  midi.recordCtxStartTime = ()=>{
+  midi.recordCtxStartTime = (delay)=>{
     let ctx = midi.getContext();
-    midi.ctxStartTime = ctx.currentTime;
+    midi.ctxStartTime = ctx.currentTime + delay;
   }
 
   function createAudioContext () {

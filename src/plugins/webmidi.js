@@ -97,7 +97,7 @@ import root from '../root'
     }
   }
 
-  midi.stopAllNotes = function (lookAhead) {
+  midi.stopAllNotes = function (delay, lookAhead) {
     if(!output){
       return
     }
@@ -106,8 +106,8 @@ import root from '../root'
     }
 
     for (var channel = 0; channel < 16; channel++) {
-      output.send([0xB0 + channel, 0x7B, 0])
-      output.send([0xB0 + channel, 0x7B, 0], window.performance.now() + lookAhead)
+      //output.send([0xB0 + channel, 0x7B, 0])
+      output.send([0xB0 + channel, 0x7B, 0], window.performance.now() + lookAhead + delay)
     }
   }
 
@@ -172,7 +172,7 @@ import root from '../root'
     output = null;
   }
 
-  midi.recordCtxStartTime = () => {
-    midi.ctxStartTime = window.performance.now() / 1000
+  midi.recordCtxStartTime = (delay) => {
+    midi.ctxStartTime = window.performance.now() / 1000 + delay
   }
 })()
