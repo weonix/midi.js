@@ -239,8 +239,9 @@ export function MidiFile(data) {
     var trackStream = Stream(trackChunk.data)
     while (!trackStream.eof()) {
       var event = readEvent(trackStream)
+      event.track = i;
       tracks[i].push(event)
-      // console.log(event)
+      //console.log(event)
     }
   }
 

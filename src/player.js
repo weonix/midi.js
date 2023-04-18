@@ -343,7 +343,8 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
                   end: player.endTime,
                   message: 144,
                   velocity: event.velocity,
-                  rawData: event.rawData
+                  rawData: event.rawData,
+                  track: event.track,
               }
               messages++
               break
@@ -360,7 +361,8 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
                 end: player.endTime,
                 message: 128,
                 velocity: event.velocity,
-                rawData: event.rawData
+                rawData: event.rawData,
+                track: event.track,
               }
               break
             default:
