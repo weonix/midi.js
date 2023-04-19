@@ -204,7 +204,7 @@ window.AudioContext && (function () {
   }
 
   midi.stopAllNotes = function (delay, lookAhead) {
-    console.log("stopAllNotes", delay);
+    // console.log("stopAllNotes", delay);
     delay += midi.ctxStartTime;
     for (var sid in sources) {
       //var delay = 0
