@@ -126,27 +126,7 @@ import root from '../root'
     // }
     // /
     
-    var access = await navigator.requestMIDIAccess()
-    plugin = access;
-    console.log(access)
-    updateOutputList();
-    stateChanageEventCallback && stateChanageEventCallback(null)
-    access.onstatechange = (event) => {
-      console.log(event);
-      updateOutputList();
-      stateChanageEventCallback && stateChanageEventCallback(event);
-    }
-
-    function updateOutputList() {
-      midi.outputs.clear();
-      var outputs = access.outputs;
-      if (typeof outputs === 'function') { // Chrome pre-43
-        outputs = outputs();
-      }
-      for (const out of outputs) {
-        midi.outputs.push(out[1]);
-      }
-    }
+    
     // console.log(output)
     // if (output == undefined) { // nothing there...
     //   errFunction()
@@ -156,6 +136,37 @@ import root from '../root'
       // opts.onsuccess && opts.onsuccess()
     // }
 
+  }
+
+  midi.userConnect = async () => {
+    try {
+      var access = await navigator.requestMIDIAccess()
+      plugin = access;
+      console.log(access)
+      updateOutputList();
+      stateChanageEventCallback && stateChanageEventCallback(null)
+      access.onstatechange = (event) => {
+        console.log(event);
+        updateOutputList();
+        stateChanageEventCallback && stateChanageEventCallback(event);
+      }
+
+      function updateOutputList() {
+        midi.outputs.clear();
+        var outputs = access.outputs;
+        if (typeof outputs === 'function') { // Chrome pre-43
+          outputs = outputs();
+        }
+        for (const out of outputs) {
+          midi.outputs.push(out[1]);
+        }
+      }
+      return true;
+    } catch (error) {
+      console.log(error)
+    }
+    return false;
+    
   }
 
   midi.setStateChangeEventListener = function (callback) {

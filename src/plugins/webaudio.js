@@ -131,7 +131,10 @@ window.AudioContext && (function () {
       source.start(delay || 0)
     }
     // /
-    sources[channelId + '' + noteId] = source
+    if( sources[channelId + '' + noteId] == null){
+      sources[channelId + '' + noteId] = [];
+    }
+    sources[channelId + '' + noteId].push(source)
     // /
     return source
   }
@@ -150,39 +153,45 @@ window.AudioContext && (function () {
       // if (delay < ctx.currentTime) {
       //   delay += ctx.currentTime
       // }
-      // /
-      var source = sources[channelId + '' + noteId]
-      if (source) {
-        //console.log("noteOff", source);
-        if (source.gainNode) {
-          // @Miranet: 'the values of 0.2 and 0.3 could of course be used as
-          // a 'release' parameter for ADSR like time settings.'
-          // add { 'metadata': { release: 0.3 } } to soundfont files
-          var gain = source.gainNode.gain
-          gain.linearRampToValueAtTime(gain.value, delay)
-          gain.linearRampToValueAtTime(-1.0, delay + 0.3)
-        }
-        // /
-        if (useStreamingBuffer) {
-          if (delay) {
-            setTimeout(function () {
-              buffer.pause()
-            }, delay * 1000)
-          } else {
-            buffer.pause()
+      //console.log(sources[channelId + '' + noteId])
+      if (sources[channelId + '' + noteId]) {
+        for (const source of sources[channelId + '' + noteId]) {
+          if (source) {
+            //console.log("noteOff", source);
+            if (source.gainNode) {
+              // @Miranet: 'the values of 0.2 and 0.3 could of course be used as
+              // a 'release' parameter for ADSR like time settings.'
+              // add { 'metadata': { release: 0.3 } } to soundfont files
+              var gain = source.gainNode.gain
+              gain.linearRampToValueAtTime(gain.value, delay)
+              gain.linearRampToValueAtTime(-1.0, delay + 0.3)
+            }
+            // /
+            if (useStreamingBuffer) {
+              if (delay) {
+                setTimeout(function () {
+                  buffer.pause()
+                }, delay * 1000)
+              } else {
+                buffer.pause()
+              }
+            } else {
+              if (source.noteOff) {
+                source.noteOff(delay + 0.5)
+              } else {
+                source.stop(delay + 0.5)
+              }
+            }
+
+            //console.log(source);
+            // /
+            //delete sources[channelId + '' + noteId]
+            // /
+            //return source
           }
-        } else {
-          if (source.noteOff) {
-            source.noteOff(delay + 0.5)
-          } else {
-            source.stop(delay + 0.5)
-          }
         }
-        // /
-        //delete sources[channelId + '' + noteId]
-        // /
-        return source
       }
+      
     }
   }
 
@@ -211,22 +220,25 @@ window.AudioContext && (function () {
       // if (delay < ctx.currentTime) {
       //   delay += ctx.currentTime
       // }
-      
-      var source = sources[sid]
-      //console.log(source, source.gainNode.gain);
-      //try {
-      //source.gainNode.gain.linearRampToValueAtTime(source.gainNode.gain.value, delay)
-      source.gainNode.gain.linearRampToValueAtTime(0, delay+0.3)
-      //} catch(a){
+      if(sources[sid]){
+        for (const source of sources[sid]) {
+          //console.log(source, source.gainNode.gain);
+          //try {
+          //source.gainNode.gain.linearRampToValueAtTime(source.gainNode.gain.value, delay)
+          source.gainNode.gain.linearRampToValueAtTime(0, delay+0.1)
+          //} catch(a){
 
-      //}
-      
-      if (source.noteOff) { // old api
-        source.noteOff(delay+0.3)
-      } else { // new api
-        source.stop(delay+0.3)
+          //}
+          
+          if (source.noteOff) { // old api
+            source.noteOff(delay+0.1)
+          } else { // new api
+            source.stop(delay+0.1)
+          }
+        }
+        delete sources[sid]
       }
-      delete sources[sid]
+
     }
   }
 

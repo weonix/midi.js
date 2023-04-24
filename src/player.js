@@ -124,7 +124,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
       root.stopAllNotes(0, player.minLookAheadTime);
     }
 
-    clearInterval(loopHandler);
+    clearPreciseInterval(loopHandler);
     // reset noteRegistrar
     noteRegistrar = {}
   }
@@ -222,7 +222,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
 
     //console.log(player.data);
 
-    loopHandler = setInterval(function () {
+    loopHandler = setPreciseInterval(function () {
       if (player.queuedTime < player.endTime) { // grab next sequence
         // /
         var note
