@@ -6,12 +6,12 @@ const clone = function (o) {
   return ret
 }
 
-export function Replayer (midiFile, timeWarp, eventProcessor, bpm, timeSignitures) {
+export function Replayer (midiFile, timeWarp, eventProcessor, bpm, inputTimeSignitures) {
   var trackStates = []
   var beatsPerMinute = bpm || 120
   var bpmOverride = !!bpm
   var ticksPerBeat = midiFile.header.ticksPerBeat
-  var timeSignitures = timeSignitures || [{time:0, numerator:4, denominator: 4}];
+  var timeSignitures = inputTimeSignitures || [{time:0, numerator:4, denominator: 4}];
 
   for (let i = 0; i < midiFile.tracks.length; i++) {
     trackStates[i] = {
@@ -68,6 +68,7 @@ export function Replayer (midiFile, timeWarp, eventProcessor, bpm, timeSigniture
     var totalWait = 0;
     //console.log("ticksToProcess", ticksToProcess, endingTick)
     for(var sign of timeSignitures){
+      //console.log(sign)
       i++;
       var nextSignTime = timeSignitures.length < i ? timeSignitures[i].time * ticksPerBeat: currentTick + ticksToProcess
       if(sign.time >= currentTick + ticksToProcess){
@@ -149,7 +150,7 @@ export function Replayer (midiFile, timeWarp, eventProcessor, bpm, timeSigniture
         var ticksInMetronomeEvents = addMetronomeEvents(totalTick, midiEvent.ticksToEvent, temporal);
         totalTick += midiEvent.ticksToEvent;
 
-        //console.log(midiEvent.ticksToEvent, ticksInMetronomeEvents)
+        console.log(midiEvent.ticksToEvent, ticksInMetronomeEvents)
         midiEvent.ticksToEvent = midiEvent.ticksToEvent - ticksInMetronomeEvents;
 
         //console.log(midiEvent.ticksToEvent)

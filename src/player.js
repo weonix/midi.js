@@ -20,6 +20,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
   player.timeWarp = 1
   player.startDelay = 0
   player.BPM = 120
+  player.TimeSignitures = null
   player.OverrideProgramChanges = false
   player.playingStartTime = 0;
   player.ctxStartTime = 0;
@@ -67,6 +68,12 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
         root.API[api].api.recordCtxStartTime(ctxDelay);
       }
     }
+    for (const channelId in root.channels) {
+      let channel = root.channels[channelId];
+      let status = 0xc0 & channel;
+      root.programChange([status, channel.instrument], channelId, channel.instrument, 0)
+    }
+    
     var ctx = player.getContext();
     player.ctxStartTime = ctx.currentTime + ctxDelay;
    
@@ -556,7 +563,8 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
   player.loadMidiFile = async function () { //onsuccess, onprogress, onerror
     try {
       // console.log(MidiFile(player.currentData), new Replayer(MidiFile(player.currentData), player.timeWarp, null, player.BPM))
-      player.replayer = new Replayer(MidiFile(player.currentData), player.timeWarp, null, player.BPM)
+      console.log(MidiFile(player.currentData));
+      player.replayer = new Replayer(MidiFile(player.currentData), player.timeWarp, null, player.BPM, player.TimeSignitures)
       player.data = player.replayer.getData()
       player.endTime = getLength()
       // /

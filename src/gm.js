@@ -130,6 +130,7 @@ root.channels = (function () { // 0 - 15 channels
   var channels = {}
   for (let i = 0; i < 16; i++) {
     channels[i] = { // default values
+      id: i,
       instrument: i,
       pitchBend: 0,
       mute: false,
@@ -139,6 +140,7 @@ root.channels = (function () { // 0 - 15 channels
     }
   }
   channels['metronome'] = { // metronome
+    id: 'metronome',
     instrument: 114,
     pitchBend: 0,
     mute: false,

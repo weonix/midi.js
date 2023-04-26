@@ -146,7 +146,7 @@ import root from '../root'
       updateOutputList();
       stateChanageEventCallback && stateChanageEventCallback(null)
       access.onstatechange = (event) => {
-        console.log(event);
+        //console.log(event);
         updateOutputList();
         stateChanageEventCallback && stateChanageEventCallback(event);
       }
