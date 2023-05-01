@@ -74,11 +74,25 @@ export function Replayer (midiFile, timeWarp, eventProcessor, bpm, inputTimeSign
     var endingTick = currentTick + ticksToProcess;
     var totalWait = 0;
     //console.log("ticksToProcess", ticksToProcess, endingTick, timeSignitures)
-    for(var sign of timeSignitures){
+    for(var measureTime of measures){
+      var sign = timeSignitures[0]
+      for (const s of timeSignitures) {
+        if(measureTime >= s.time){
+          sign = s
+        }
+        else{
+          break;
+        }
+      }
       //console.log(sign, currentTick + ticksToProcess)
       i++;
-      var signTime = sign.time;
-      var nextSignTime = timeSignitures.length < i ? timeSignitures[i].time * ticksPerBeat: currentTick + ticksToProcess
+      // var signTime = sign.time;
+      // var nextSignTime = timeSignitures.length < i ? timeSignitures[i].time * ticksPerBeat: currentTick + ticksToProcess
+      var signTime = measureTime;
+      var nextSignTime = measures.length < i ? measures[i] * ticksPerBeat: currentTick + ticksToProcess
+      if(currentTick > nextSignTime){
+        continue;
+      }
       if(signTime >= currentTick + ticksToProcess){
         break;
       }
@@ -92,7 +106,7 @@ export function Replayer (midiFile, timeWarp, eventProcessor, bpm, inputTimeSign
         wait =  beatTime - ((currentTick - signTime) % beatTime)
       }
       else{
-       wait = 0;
+        wait = 0;
       }
       
       if(currentTick + wait < endingTick){
@@ -111,9 +125,10 @@ export function Replayer (midiFile, timeWarp, eventProcessor, bpm, inputTimeSign
       }
     }
 
-    return totalWait;
+    return totalWait
+  }
 
-    function addSingleMetronomeEvent(currentTick, wait, sign) {
+  function addSingleMetronomeEvent(currentTick, wait, sign) {
       var beatsToGenerate = wait / ticksPerBeat
       var secondsToGenerate = beatsToGenerate / (beatsPerMinute / 60)
       var time = (secondsToGenerate * 1000 * timeWarp) || 0
@@ -146,7 +161,6 @@ export function Replayer (midiFile, timeWarp, eventProcessor, bpm, inputTimeSign
         ]
       )
     }
-  }
   //
   var totalTick = 0;
   var midiEvent
