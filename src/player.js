@@ -71,7 +71,16 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
     for (const channelId in root.channels) {
       let channel = root.channels[channelId];
       let status = 0xc0 & channel;
-      root.programChange([status, channel.instrument], channelId, channel.instrument, 0)
+      root.programChange(
+        {
+          type: 'channel',
+          channel: channelId,
+          subtype: 'programChange',
+          programNumber: channel.instrument,
+          rawData:[status, channel.instrument]
+        },
+        channelId, channel.instrument, 0
+      )
     }
     
     var ctx = player.getContext();
