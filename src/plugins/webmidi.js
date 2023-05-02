@@ -44,6 +44,7 @@ import root from '../root'
       return
     }
     delay += midi.ctxStartTime
+    return 
     output.send(event.rawData, delay * 1000)
     //output.send([0xC0 + channel, program], delay * 1000)
   }
