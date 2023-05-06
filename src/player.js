@@ -147,7 +147,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
 
   player.getAudioContextPlaytime = function () {
     let ctx = player.getContext();
-    var ctxTime = ctx == null ? 0 : ctx.currentTime;
+    var ctxTime = ctx == null ? window.performance.now() / 1000 : ctx.currentTime;
     return ctxTime - player.ctxStartTime + player.playingStartTime / 1000;
   }
 
@@ -203,12 +203,12 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
   player.cancelLoop = function () {
     player.loopStart = undefined;
     player.loopEnd = undefined;
-    console.log("cancelLoop")
+    //console.log("cancelLoop")
   }
 
   player.getContext = function () {
-    if (root.API.WebAudio.avaliable) {
-      return root.WebAudio.getContext()
+    if (root.API.WebAudio.enabled && root.API.WebAudio.avaliable && root.WebAudio.getContext()) {
+      return root.WebAudio.getContext() 
     } else {
       return { get currentTime(){return window.performance.now() / 1000}}
     }
@@ -257,7 +257,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
         for (var n = player.eventPosition; n < length; n++) {
           var obj = data[n];
           
-          //console.log("-", obj, ( player.currentProcessedEventTime / 1000) - player.minLookAheadTime, player.getAudioContextPlaytime());
+          //console.log("-", obj, ( player.queuedTime / 1000) - player.minLookAheadTime, player.getAudioContextPlaytime());
           //stop queueing if look ahead is exceeded
           if ((player.queuedTime / 1000) - player.minLookAheadTime > ( player.getAudioContextPlaytime())){
               break;
