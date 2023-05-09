@@ -69,30 +69,17 @@ export function Replayer (midiFile, timeWarp, eventProcessor, bpm, inputTimeSign
   }
 
   
-  function addMetronomeEvents(currentTick, ticksToProcess, temporal){
+  
+function addMetronomeEvents(currentTick, ticksToProcess, temporal){
     var i = 0;
     var endingTick = currentTick + ticksToProcess;
     var totalWait = 0;
     //console.log("ticksToProcess", ticksToProcess, endingTick, timeSignitures)
-    for(var measureTime of measures){
-      var sign = timeSignitures[0]
-      for (const s of timeSignitures) {
-        if(measureTime >= s.time){
-          sign = s
-        }
-        else{
-          break;
-        }
-      }
+    for(var sign of timeSignitures){
       //console.log(sign, currentTick + ticksToProcess)
       i++;
-      // var signTime = sign.time;
-      // var nextSignTime = timeSignitures.length < i ? timeSignitures[i].time * ticksPerBeat: currentTick + ticksToProcess
-      var signTime = measureTime;
-      var nextSignTime = measures.length < i ? measures[i] * ticksPerBeat: currentTick + ticksToProcess
-      if(currentTick > nextSignTime){
-        continue;
-      }
+      var signTime = sign.time;
+      var nextSignTime = timeSignitures.length < i ? timeSignitures[i].time * ticksPerBeat: currentTick + ticksToProcess
       if(signTime >= currentTick + ticksToProcess){
         break;
       }
@@ -106,7 +93,7 @@ export function Replayer (midiFile, timeWarp, eventProcessor, bpm, inputTimeSign
         wait =  beatTime - ((currentTick - signTime) % beatTime)
       }
       else{
-        wait = 0;
+       wait = 0;
       }
       
       if(currentTick + wait < endingTick){
@@ -125,7 +112,7 @@ export function Replayer (midiFile, timeWarp, eventProcessor, bpm, inputTimeSign
       }
     }
 
-    return totalWait
+    return totalWait;
   }
 
   function addSingleMetronomeEvent(currentTick, wait, sign) {
@@ -138,7 +125,7 @@ export function Replayer (midiFile, timeWarp, eventProcessor, bpm, inputTimeSign
       //   metronomeEventsType = 'heavy'
       // }
       for (const measureTime of measures) {
-        //console.log(measureTime * ticksPerBeat * 4, wait + currentTick)
+          console.log(measureTime * ticksPerBeat * 4, wait + currentTick)
          if(measureTime * ticksPerBeat * 4 == wait + currentTick){
            metronomeEventsType = 'heavy'
            break;
@@ -146,7 +133,7 @@ export function Replayer (midiFile, timeWarp, eventProcessor, bpm, inputTimeSign
       }
      
 
-      //console.log(currentTick, "addSingleMetronomeEvent", wait, metronomeEventsType)
+      console.log(currentTick, "addSingleMetronomeEvent", wait, metronomeEventsType)
 
       temporal.push(
         [

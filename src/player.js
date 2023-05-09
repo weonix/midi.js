@@ -89,7 +89,8 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
     player.eventPosition = 0;
         //if (!fromCache) {
     //if (typeof player.currentProcessedEventTime === 'undefined') {
-    player.currentProcessedEventTime = player.restart
+    player.currentProcessedEventTime = 0
+    console.log(player.restart, player.currentProcessedEventTime, startTime)
     //}
     // /stopAudio()
     player.playing = true
@@ -236,6 +237,8 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
 
     let lastLoopTime = player.currentTime;
 
+    let hasLooped = false
+
     //console.log(player.data);
 
     loopHandler = setPreciseInterval(function () {
@@ -252,7 +255,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
         player.currentTime = player.getAudioContextPlaytime() * 1000;
 
         
-        //console.log("========", player.currentProcessedEventTime, player.queuedTime, "===========");
+        console.log("========", player.currentProcessedEventTime, player.queuedTime, "===========");
 
         for (var n = player.eventPosition; n < length; n++) {
           var obj = data[n];
@@ -270,16 +273,31 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
           
           player.eventPosition += 1;
 
-         // console.log(n, player.currentProcessedEventTime, player.queuedTime);
+          // var tooEarly = player.currentProcessedEventTime < player.queuedTime;
+          // console.log(n, player.currentProcessedEventTime, player.queuedTime, obj, player.currentProcessedEventTime + obj[1], tooEarly);
 
-          if  (player.currentProcessedEventTime < player.queuedTime + obj[1]) {
-            continue;
+          // if (tooEarly) { // + obj[1]
+          //   console.log(n, player.currentProcessedEventTime, player.queuedTime, obj, player.currentProcessedEventTime + obj[1], tooEarly)
+          //   continue;
+          // }
+
+          if(player.currentProcessedEventTime < player.queuedTime){
+            continue
           }
 
-          //move queue time if we start starting to process new incoming events
-          player.queuedTime += obj[1]
+          // if (player.currentProcessedEventTime < player.playingStartTime) {
+          //   continue;
+          // }
 
-          //goes back to loop star when loop end is exceeded
+
+          console.log(obj[0], "ok");
+
+          //move queue time if we start starting to process new incoming events
+          //player.queuedTime += obj[1]
+
+          player.queuedTime = player.currentProcessedEventTime
+
+          //goes back to loop start when loop end is exceeded
           if (player.loopEnd){
             if(player.queuedTime >= player.loopEnd * 1000 || player.queuedTime < player.loopStart * 1000){
               const delay = player.queuedTime / 1000 - player.getAudioContextPlaytime();
@@ -293,12 +311,17 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
                 ctxTime: player.ctxStartTime + delay,
               }
 
+              console.log("before looped", delay, player.queuedTime, player.loopStart * 1000, player.playingStartTime)
+
               //console.log(player.getAudioContextPlaytime(), player.queuedTime, "loop", player.loopStart * 1000, player.loopEnd * 1000, delay)
               player.startAudio(player.loopStart * 1000, delay);
+              hasLooped  = true
 
               if(player.onLoopRestarted){
                 player.onLoopRestarted.call(root)
               }
+
+              console.log("LOOPED", delay, player.queuedTime, player.loopStart * 1000, player.playingStartTime)
 
               break;
             }
