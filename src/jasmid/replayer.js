@@ -72,12 +72,12 @@ function addMetronomeEvents2(currentTick, ticksToProcess, temporal){
   var i = 0;
   var endingTick = currentTick + ticksToProcess;
   var totalWait = 0;
-  console.log("ticksToProcess", currentTick, ticksToProcess, endingTick)
+  //console.log("ticksToProcess", currentTick, ticksToProcess, endingTick)
   for(let i = 0; i < measures.length; i++){
     let measureTick =  measures[i] * 4 * ticksPerBeat;
     let measureEndTick = i < measures.length -1 ? measures[i + 1] * 4 * ticksPerBeat : endingTick;
     let endTick = Math.min(measureEndTick, endingTick)
-    console.log("cheecking", currentTick, i, measures[i]  * 4 , ticksPerBeat, measureTick, endTick)
+    //.log("cheecking", currentTick, i, measures[i]  * 4 , ticksPerBeat, measureTick, endTick)
     var sign = getTimeSignitureForMeasure(timeSignitures, measures[i] * 4)
     var beatTime = ticksPerBeat * 4 / sign.denominator;
     if(currentTick + beatTime >= measureTick && currentTick < endTick){ // 
@@ -90,18 +90,18 @@ function addMetronomeEvents2(currentTick, ticksToProcess, temporal){
       else{
         wait = 0;
       }
-      console.log(currentTick - measureTick, beatTime, (currentTick - measureTick) % beatTime)
-      console.log(measures[i] * 4, sign, wait)
+      //console.log(currentTick - measureTick, beatTime, (currentTick - measureTick) % beatTime)
+      //console.log(measures[i] * 4, sign, wait)
       
       if(currentTick + wait < endTick){
-        console.log(currentTick, wait, endTick)
+        //console.log(currentTick, wait, endTick)
         addSingleMetronomeEvent(currentTick, wait, sign)
         totalWait += wait;
         currentTick += wait;
         //current tick is now aligned with beat
         while(currentTick + beatTime < endTick){
           let wait = beatTime;
-          console.log(currentTick, wait, endTick)
+          //console.log(currentTick, wait, endTick)
           addSingleMetronomeEvent(currentTick, wait, sign)
           totalWait += wait;
           currentTick += wait;
@@ -168,9 +168,9 @@ function addMetronomeEvents(currentTick, ticksToProcess, temporal){
       // if ((((wait + currentTick) - (sign.time * ticksPerBeat)) / ticksPerBeat) % sign.numerator == 0) {
       //   metronomeEventsType = 'heavy'
       // }
-      console.log(measures)
+      //console.log(measures)
       for (const measureTime of measures) {
-          console.log(measureTime * ticksPerBeat * 4, wait + currentTick)
+          //console.log(measureTime * ticksPerBeat * 4, wait + currentTick)
          if(measureTime * ticksPerBeat * 4 == wait + currentTick){
            metronomeEventsType = 'heavy'
            break;
@@ -178,7 +178,7 @@ function addMetronomeEvents(currentTick, ticksToProcess, temporal){
       }
      
 
-      console.log(currentTick, "addSingleMetronomeEvent", wait, metronomeEventsType)
+      //console.log(currentTick, "addSingleMetronomeEvent", wait, metronomeEventsType)
 
       temporal.push(
         [
