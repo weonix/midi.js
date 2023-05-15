@@ -255,7 +255,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
         player.currentTime = player.getAudioContextPlaytime() * 1000;
 
         
-        console.log("========", player.currentProcessedEventTime, player.queuedTime, "===========");
+        //console.log("========", player.currentProcessedEventTime, player.queuedTime, "===========");
 
         for (var n = player.eventPosition; n < length; n++) {
           var obj = data[n];
@@ -290,7 +290,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
           // }
 
 
-          console.log(obj[0], "ok");
+          // console.log(obj[0], "ok");
 
           //move queue time if we start starting to process new incoming events
           //player.queuedTime += obj[1]
