@@ -14,6 +14,7 @@ import root from '../root'
   var stateChanageEventCallback = null;
   midi.outputs = [];
 
+
   midi.send = function (data, delay) { // set channel volume
     if(!output || !event.rawData){
       return
@@ -27,7 +28,11 @@ import root from '../root'
       return
     }
     delay += midi.ctxStartTime
-    output.send(event.rawData, delay * 1000)
+    let rawdata = event.rawData
+    if(root.MidiChannelMapping[channel] != undefined){
+      rawdata = midi.setEventChannel(rawdata, root.MidiChannelMapping[channel])
+    }
+    output.send(rawdata, delay * 1000)
     //output.send([channel, type, value], delay * 1000)
   }
 
@@ -36,15 +41,21 @@ import root from '../root'
       return
     }
     delay += midi.ctxStartTime
+    if(root.MidiChannelMapping[channel] != undefined){
+      channel = root.MidiChannelMapping[channel]
+    }
     output.send([0xB0 + channel, 0x07, volume], delay * 1000)
   }
 
   midi.programChange = function (event, channel, program, delay) { // change patch (instrument)
-  if(!output || !event.rawData){
+    if(!output || !event.rawData){
       return
     }
     delay += midi.ctxStartTime
     return 
+    if(root.MidiChannelMapping[channel] != undefined){
+      rawdata = midi.setEventChannel(rawdata, root.MidiChannelMapping[channel])
+    }
     output.send(event.rawData, delay * 1000)
     //output.send([0xC0 + channel, program], delay * 1000)
   }
@@ -54,18 +65,28 @@ import root from '../root'
       return
     }
     delay += midi.ctxStartTime
-    //console.log(event, event.rawData)
-    output.send(event.rawData,delay * 1000)
+    let rawdata = event.rawData
+    if(root.MidiChannelMapping[channel] != undefined){
+      rawdata = midi.setEventChannel(rawdata, root.MidiChannelMapping[channel])
+    }
+    output.send(rawdata,delay * 1000)
     //console.log([0xE0 + channel, program],delay * 1000);
     //output.send([0xE0 + channel, program], delay * 1000)
   }
 
-  midi.noteOn = function (event,channel, note, velocity, delay) {
+  midi.noteOn = function (event, channel, note, velocity, delay) {
     if(!output || !event.rawData){
       return
     }
     delay += midi.ctxStartTime
-    output.send(event.rawData, delay * 1000)
+    let rawdata = event.rawData
+    //console.log(rawdata, channel, root.MidiChannelMapping[channel], root.MidiChannelMapping)
+    if(root.MidiChannelMapping[channel] != undefined){
+      rawdata = midi.setEventChannel(rawdata, root.MidiChannelMapping[channel])
+     // console.log(rawdata)
+    }
+    //console.log("noteOn", delay * 1000 )
+    output.send(rawdata, delay * 1000)
     //output.send([0x90 + channel, note, velocity], delay * 1000)
   }
 
@@ -74,7 +95,11 @@ import root from '../root'
       return
     }
     delay += midi.ctxStartTime
-    output.send(event.rawData, delay * 1000)
+    let rawdata = event.rawData
+    if(root.MidiChannelMapping[channel] != undefined){
+      rawdata = midi.setEventChannel(rawdata, root.MidiChannelMapping[channel])
+    }
+    output.send(rawdata, delay * 1000)
     //output.send([0x80 + channel, note, 0], delay * 1000)
   }
 
@@ -82,6 +107,9 @@ import root from '../root'
     if(!output){
       return
     }
+      if(root.MidiChannelMapping[channel] != undefined){
+          channel = root.MidiChannelMapping[channel]
+      }
     for (var n = 0; n < chord.length; n++) {
       var note = chord[n]
       output.send([0x90 + channel, note, velocity], delay * 1000)
@@ -92,6 +120,11 @@ import root from '../root'
     if(!output ){
       return
     }
+      if(root.MidiChannelMapping[channel] != undefined){
+          channel = root.MidiChannelMapping[channel]
+      }
+
+    
     for (var n = 0; n < chord.length; n++) {
       var note = chord[n]
       output.send([0x80 + channel, note, 0], delay * 1000)
@@ -106,10 +139,24 @@ import root from '../root'
       output.clear()
     }
 
+    if (delay == 0){
+      delay = window.performance.now() / 1000
+    }
+    else{
+      delay += midi.ctxStartTime
+    }
+
+    //output.send([0x90, 100, 100], (lookAhead + delay) * 1000)
+    
     for (var channel = 0; channel < 16; channel++) {
       //output.send([0xB0 + channel, 0x7B, 0])
-      output.send([0xB0 + channel, 0x7B, 0], window.performance.now() + lookAhead + delay)
+      output.send([0xB0 + channel, 0x7B, 0], delay * 1000)
+      //output.send([0x80 + channel, 1, 1], delay * 1000)
+      // output.send([0xB0 + channel, 0x7B, 0])
     }
+    //console.log("stopAllNotes",lookAhead, (lookAhead + delay)*1000)
+    output.send([0xFC], delay * 1000)
+    // output.send([0xFC])
   }
 
   midi.connect = async function (opts) {
@@ -182,6 +229,11 @@ import root from '../root'
       }
     }
     output = null;
+  }
+
+  midi.setEventChannel = function(rawData, channelNum) {
+    rawData[0] = ( rawData[0] & 0xf0) | channelNum;
+    return rawData
   }
 
   midi.recordCtxStartTime = (delay) => {

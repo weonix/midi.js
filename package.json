@@ -35,12 +35,12 @@
     "chai": "3.4.1",
     "gh-pages": "^0.11.0",
     "mocha": "2.3.4",
-    "rimraf": "^4.4.0",
     "standard": "^8.0.0",
     "standard-loader": "^5.0.0",
     "webpack": "1.13.2"
   },
   "dependencies": {
-    "precise-interval": "^1.0.2"
+    "precise-interval": "^1.0.2",
+    "rimraf": "^5.0.0"
   }
 }

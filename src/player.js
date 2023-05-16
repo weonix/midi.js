@@ -116,7 +116,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
     //     o.source.disconnect(0)
     //   }
     // }
-
+    var delay = ( (player.currentProcessedEventTime - player.playingStartTime + player.startDelay) / 1000);
     // run callback to cancel any notes still playing
     for (var key in noteRegistrar) {
       let o = noteRegistrar[key]
@@ -124,7 +124,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
       //root.noteOff(o, o.channel, o.note, 0);
       if (noteRegistrar[key].message === 144 && onMidiEvent) {
         const endPlaybackMidiData = [128 ,o.note, o.velocity]
-        onMidiEvent({
+        let event = {
           channel: o.channel,
           note: o.note,
           now: o.now,
@@ -132,13 +132,16 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
           message: 128,
           velocity: o.velocity,
           rawData: endPlaybackMidiData
-        });
+        }
+        onMidiEvent(event);
+        root.noteOff(event, o.channel, o.note, delay);
       }
+      
     }
 
 
     if(root.stopAllNotes){
-      root.stopAllNotes(0, player.minLookAheadTime);
+      root.stopAllNotes(player.queuedTime, player.minLookAheadTime);
     }
 
     clearPreciseInterval(loopHandler);
@@ -302,7 +305,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
             if(player.queuedTime >= player.loopEnd * 1000 || player.queuedTime < player.loopStart * 1000){
               const delay = player.queuedTime / 1000 - player.getAudioContextPlaytime();
               const stopNoteDelay = (player.loopEnd * 1000 - player.playingStartTime + player.startDelay) / 1000
-              root.stopAllNotes(stopNoteDelay)
+              root.stopAllNotes(stopNoteDelay, 0)
 
               noteOffRegistrar["stopAllNotes"] = {
                 now: player.queuedTime,

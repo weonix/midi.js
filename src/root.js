@@ -21,6 +21,8 @@ class MidiPlayer{
         }
     }
 
+    MidiChannelMapping = {}
+
     setController = (event, channel, type, value, delay) => {
         for (const apiName in this.API) {
             var api = this.API[apiName];
