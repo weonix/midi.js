@@ -131,7 +131,7 @@ import root from '../root'
     }
   }
 
-  midi.stopAllNotes = function (delay, lookAhead) {
+  midi.stopAllNotes = function (delay, lookAhead, stopImmediatelyIfPossible = false) {
     if(!output){
       return
     }

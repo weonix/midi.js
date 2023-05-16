@@ -141,7 +141,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
 
 
     if(root.stopAllNotes){
-      root.stopAllNotes(player.queuedTime, player.minLookAheadTime);
+      root.stopAllNotes(delay, player.minLookAheadTime, true);
     }
 
     clearPreciseInterval(loopHandler);
