@@ -49,11 +49,12 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
       player.currentTime = -1
     }
 
-    if (player.loopStart !== undefined) {
-      if(player.currentTime < player.loopStart * 1000 || player.currentTime > player.loopEnd * 1000){
-        player.currentTime = player.loopStart * 1000;
-      }
-    }
+    player.insideLoop = false;
+    // if (player.loopStart !== undefined) {
+    //   if(player.currentTime < player.loopStart * 1000 || player.currentTime > player.loopEnd * 1000){
+    //     player.currentTime = player.loopStart * 1000;
+    //   }
+    // }
     //startAudio(player.currentTime, null, onsuccess)
     if(player.playing){
       stopAudio()
@@ -157,14 +158,16 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
 
   player.getDisplayedAudioContextPlaytime = function () {
     let time = player.getAudioContextPlaytime();
-    if(player.loopStart !== undefined && player.loopEnd > player.loopStart){
-      let loopDuration = player.loopEnd - player.loopStart;
-      while(time < player.loopStart){
-        time += loopDuration;
-      }
-      
-      if(time >= player.loopEnd){
-        time = player.loopStart + time % loopDuration;
+    if(player.insideLoop){
+      if(player.loopStart !== undefined && player.loopEnd > player.loopStart){
+        let loopDuration = player.loopEnd - player.loopStart;
+        while(time < player.loopStart){
+          time += loopDuration;
+        }
+        
+        if(time >= player.loopEnd){
+          time = player.loopStart + time % loopDuration;
+        }
       }
     }
     return time;
@@ -201,7 +204,8 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
   player.setLoop = function (start, end) {
     player.loopStart = start;
     player.loopEnd = end;
-    //console.log(start, end)
+    console.log(start, end)
+    console.trace()
   }
 
   player.cancelLoop = function () {
@@ -300,8 +304,15 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
 
           player.queuedTime = player.currentProcessedEventTime
 
+          if(player.loopEnd != undefined){
+            let ctxTime = player.getAudioContextPlaytime()
+            if(ctxTime < player.loopEnd && ctxTime > player.loopStart){
+              player.insideLoop = true
+            }
+          }
+
           //goes back to loop start when loop end is exceeded
-          if (player.loopEnd){
+          if (player.insideLoop && player.loopEnd != undefined){
             if(player.queuedTime >= player.loopEnd * 1000 || player.queuedTime < player.loopStart * 1000){
               const delay = player.queuedTime / 1000 - player.getAudioContextPlaytime();
               const stopNoteDelay = (player.loopEnd * 1000 - player.playingStartTime + player.startDelay) / 1000
@@ -314,7 +325,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
                 ctxTime: player.ctxStartTime + delay,
               }
 
-              console.log("before looped", delay, player.queuedTime, player.loopStart * 1000, player.playingStartTime)
+              //console.log("before looped", delay, player.queuedTime, player.loopStart * 1000, player.playingStartTime)
 
               //console.log(player.getAudioContextPlaytime(), player.queuedTime, "loop", player.loopStart * 1000, player.loopEnd * 1000, delay)
               player.startAudio(player.loopStart * 1000, delay);
@@ -324,7 +335,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
                 player.onLoopRestarted.call(root)
               }
 
-              console.log("LOOPED", delay, player.queuedTime, player.loopStart * 1000, player.playingStartTime)
+              //console.log("LOOPED", delay, player.queuedTime, player.loopStart * 1000, player.playingStartTime)
 
               break;
             }
