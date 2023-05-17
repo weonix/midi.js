@@ -386,6 +386,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
             case 'noteOn':
               if (channel.mute) break
               note = event.noteNumber + (player.MIDIOffset || 0)
+              event.rawData[1] = note
               root.noteOn(event, channelId, note, event.velocity, delay);
               var key = channelId + " " + note + " " + delay;
               noteRegistrar[key] = {
@@ -404,6 +405,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
             case 'noteOff':
               //if (channel.mute) break
               note = event.noteNumber + (player.MIDIOffset || 0)
+              event.rawData[1] = note
               root.noteOff(event, channelId, note, delay);
               var key = channelId + " " + note + " " + delay;
               noteOffRegistrar[key] = {
@@ -837,6 +839,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
   //       case 'noteOn':
   //         if (channel.mute) break
   //         note = event.noteNumber + (player.MIDIOffset || 0)
+  //          event.rawData[1] = note
   //         //console.log(channelId, note, event.velocity, delay);
   //         eventQueue.push({
   //           event: event,
@@ -849,6 +852,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
   //       case 'noteOff':
   //         if (channel.mute) break
   //         note = event.noteNumber + (player.MIDIOffset || 0)
+  //          event.rawData[1] = note
   //         //console.log(note, player.MIDIOffset, event.noteNumber);
   //         eventQueue.push({
   //           event: event,
