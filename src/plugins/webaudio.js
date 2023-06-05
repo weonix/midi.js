@@ -219,7 +219,7 @@ window.AudioContext && (function () {
       delay = 0;
     }
 
-    console.log(stopImmediatelyIfPossible, delay)
+    //console.log(stopImmediatelyIfPossible, delay)
     for (var sid in sources) {
       //var delay = 0
       // if (delay < ctx.currentTime) {

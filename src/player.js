@@ -544,9 +544,13 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
 
   
   player.clearAnimation = function () {
+    //console.log("clearAnimation");
+
     if (player.animationFrameId) {
       window.cancelAnimationFrame(player.animationFrameId)
     }
+
+     
   }
 
   player.setAnimation = function (callback) {
@@ -555,8 +559,11 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
     var tTheirTime = 0
     //
     player.clearAnimation()
+
+    //console.log("setAnimation");
     // /
     var frame = function () {
+      //console.log("frame");
       player.animationFrameId = window.requestAnimationFrame(frame)
       // /
       if (player.endTime === 0) {
@@ -603,7 +610,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
       }
     }
     // /
-    window.requestAnimationFrame(frame)
+    player.animationFrameId = window.requestAnimationFrame(frame)
   }
 
   // helpers
