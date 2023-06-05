@@ -91,7 +91,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
         //if (!fromCache) {
     //if (typeof player.currentProcessedEventTime === 'undefined') {
     player.currentProcessedEventTime = 0
-    console.log(player.restart, player.currentProcessedEventTime, startTime)
+    //console.log(player.restart, player.currentProcessedEventTime, startTime)
     //}
     // /stopAudio()
     player.playing = true
