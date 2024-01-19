@@ -618,7 +618,7 @@ import { setPreciseInterval, clearPreciseInterval } from 'precise-interval';
   player.loadMidiFile = async function () { //onsuccess, onprogress, onerror
     try {
       // console.log(MidiFile(player.currentData), new Replayer(MidiFile(player.currentData), player.timeWarp, null, player.BPM))
-      console.log(MidiFile(player.currentData));
+      //console.log(MidiFile(player.currentData));
       player.replayer = new Replayer(MidiFile(player.currentData), player.timeWarp, null, player.BPM, player.TimeSignitures, player.Measures )
       player.data = player.replayer.getData()
       player.endTime = getLength()
